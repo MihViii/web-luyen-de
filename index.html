@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Phòng Luyện Đề</title>
+  <meta name="claude:viewport-fit-sides" content="cover">
+
+  <!-- Font chữ (hỗ trợ tiếng Việt) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600;700&display=swap">
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- MathJax: hiển thị công thức LaTeX viết giữa $...$ -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["$", "$"]], displayMath: [["$$", "$$"]] },
+      svg: { fontCache: "global" },
+      startup: { typeset: false }
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+  <div class="khung">
+
+    <!-- ===== MÀN 1: CHỌN ĐỀ ===== -->
+    <section id="man-chon-de">
+      <header class="dau-trang">
+        <div>
+          <span class="nhan" id="ten-lop-hoc"></span>
+          <h1>Phòng Luyện Đề</h1>
+        </div>
+        <span class="nhan">Cấu trúc đề thi tốt nghiệp THPT</span>
+      </header>
+      <div id="danh-sach-mon"></div>
+    </section>
+
+    <!-- ===== MÀN 2: NHẬP THÔNG TIN ===== -->
+    <section id="man-thong-tin" hidden>
+      <header class="dau-trang">
+        <div>
+          <span class="nhan" id="tt-mon"></span>
+          <h1 id="tt-ten-de"></h1>
+        </div>
+      </header>
+      <form class="hop-form" id="form-thong-tin" novalidate>
+        <p class="goi-y" id="tt-mo-ta"></p>
+        <label for="o-ho-ten">Họ và tên
+          <input id="o-ho-ten" autocomplete="name" placeholder="Nguyễn Văn An" required>
+        </label>
+        <label for="o-lop">Lớp
+          <input id="o-lop" placeholder="12A1">
+        </label>
+        <p class="loi" id="loi-thong-tin" hidden>Bạn nhập họ tên trước khi bắt đầu nhé.</p>
+        <div class="hang-nut">
+          <button type="submit" class="nut nut-chinh">Bắt đầu làm bài</button>
+          <button type="button" class="nut" id="nut-quay-lai">Chọn đề khác</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- ===== MÀN 3: LÀM BÀI ===== -->
+    <section id="man-lam-bai" hidden>
+      <div class="bo-cuc-lam-bai">
+        <div class="to-de" id="to-de"></div>
+
+        <aside class="phieu" aria-label="Phiếu trả lời">
+          <div class="phieu-gon">
+            <div class="dong-ho" id="dong-ho">
+              <span class="nhan">Thời gian còn lại</span>
+              <span class="so" id="so-dong-ho">90:00</span>
+            </div>
+            <button type="button" class="nut nut-mo-phieu" id="nut-mo-phieu" aria-expanded="false">Phiếu</button>
+          </div>
+          <div class="thanh-tien-do"><div id="tien-do" style="width:0%"></div></div>
+          <div class="luoi-phieu-wrap" id="luoi-phieu-wrap" data-mo="false">
+            <div class="luoi-phieu" id="luoi-phieu"></div>
+          </div>
+          <span class="dem-cau" id="dem-cau"></span>
+          <button type="button" class="nut nut-do" id="nut-nop">Nộp bài</button>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===== MÀN 4: KẾT QUẢ ===== -->
+    <section id="man-ket-qua" hidden>
+      <header class="dau-trang">
+        <div>
+          <span class="nhan">Kết quả</span>
+          <h1 id="kq-ten-de"></h1>
+        </div>
+        <div class="hang-nut">
+          <button type="button" class="nut" id="nut-lam-lai">Làm lại đề này</button>
+          <button type="button" class="nut nut-chinh" id="nut-ve-trang-chu">Chọn đề khác</button>
+        </div>
+      </header>
+      <div id="bang-diem"></div>
+      <div class="loc-ket-qua" role="group" aria-label="Lọc câu">
+        <button type="button" data-loc="tat-ca" aria-pressed="true">Tất cả</button>
+        <button type="button" data-loc="sai" aria-pressed="false">Chỉ câu sai</button>
+      </div>
+      <div class="to-de" id="xem-lai"></div>
+    </section>
+  </div>
+
+  <!-- Hộp xác nhận nộp bài -->
+  <div class="hop-xac-nhan" id="hop-xac-nhan" hidden>
+    <div class="noi-dung" role="dialog" aria-modal="true" aria-labelledby="xn-tieu-de">
+      <h2 id="xn-tieu-de">Nộp bài?</h2>
+      <p id="xn-noi-dung"></p>
+      <div class="hang-nut">
+        <button type="button" class="nut nut-do" id="xn-dong-y">Nộp bài</button>
+        <button type="button" class="nut" id="xn-huy">Làm tiếp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thứ tự quan trọng: cấu hình -> dữ liệu đề -> chấm điểm -> giao diện -->
+  <script src="js/config.js"></script>
+  <script src="data/de-thi.js"></script>
+  <script src="js/cham-diem.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

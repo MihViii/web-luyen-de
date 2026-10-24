@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Sổ Điểm Luyện Đề</title>
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="khung">
+    <header class="dau-trang">
+      <div>
+        <span class="nhan">Dành cho gia sư</span>
+        <h1>Sổ Điểm Luyện Đề</h1>
+      </div>
+      <a class="nut" href="index.html">Về trang học sinh</a>
+    </header>
+
+    <form class="hang-cong-cu" id="form-mat-khau">
+      <label for="o-mat-khau" class="nhan">Mật khẩu</label>
+      <input type="password" id="o-mat-khau" autocomplete="current-password" placeholder="Mật khẩu trong Code.gs">
+      <button type="submit" class="nut nut-chinh">Tải kết quả</button>
+      <span class="dem-cau" id="trang-thai"></span>
+    </form>
+
+    <div id="noi-dung" hidden>
+      <div class="hang-cong-cu">
+        <label for="loc-de" class="nhan">Đề</label>
+        <select id="loc-de"></select>
+        <label for="loc-tim" class="nhan">Tìm</label>
+        <input id="loc-tim" placeholder="Tên hoặc lớp">
+      </div>
+
+      <div class="the-so" id="the-so"></div>
+
+      <div class="ti-le" id="ti-le" hidden></div>
+
+      <div class="cuon-ngang">
+        <table>
+          <thead>
+            <tr>
+              <th data-sap="nopLuc">Nộp lúc</th>
+              <th data-sap="hoTen">Họ tên</th>
+              <th data-sap="lop">Lớp</th>
+              <th data-sap="tenDe">Đề</th>
+              <th data-sap="diem" class="so">Điểm</th>
+              <th data-sap="diem1" class="so">P.I</th>
+              <th data-sap="diem2" class="so">P.II</th>
+              <th data-sap="diem3" class="so">P.III</th>
+              <th data-sap="giayDaLam" class="so">Thời gian</th>
+            </tr>
+          </thead>
+          <tbody id="bang"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="data/de-thi.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
