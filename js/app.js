@@ -45,6 +45,13 @@ function dinhDangThoiGian(giay) {
   return String(phut).padStart(2, "0") + ":" + String(g % 60).padStart(2, "0");
 }
 
+// Hình minh họa của câu hỏi (trường "hinh" trong de.js, tính từ thư mục của đề), không có thì bỏ qua
+function veHinh(de, cau) {
+  if (!cau.hinh) return "";
+  const src = new URL(cau.hinh, de.thuMuc).href;
+  return `<img class="hinh-de" src="${anToan(src)}" alt="Hình minh họa" loading="lazy">`;
+}
+
 // Bảo MathJax vẽ lại công thức trong một vùng vừa thay đổi
 function veCongThuc(phanTu) {
   if (!window.MathJax || !MathJax.startup) return;
@@ -171,7 +178,7 @@ function veToDe() {
 
   const phan1 = de.phan1.map((cau, i) => `
     <article class="cau" id="cau-p1-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}</div>
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
       <div class="lua-chon">
         ${cau.luaChon.map((lc, j) => `
           <label>
@@ -184,7 +191,7 @@ function veToDe() {
 
   const phan2 = de.phan2.map((cau, i) => `
     <article class="cau" id="cau-p2-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}</div>
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
       <div class="y-dung-sai">
         ${cau.y.map((y, j) => `
           <div class="dong-y">
@@ -200,7 +207,7 @@ function veToDe() {
 
   const phan3 = de.phan3.map((cau, i) => `
     <article class="cau" id="cau-p3-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}</div>
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
       <div class="o-tra-loi">
         <input type="text" maxlength="4" data-p3="${i}" value="${anToan(bl.phan3[i])}"
                aria-label="Đáp án câu ${i + 1} phần III" autocomplete="off" spellcheck="false">
@@ -391,7 +398,7 @@ function veXemLai(de, bl, ct) {
       <article class="cau ${dung ? "ket-qua-dung" : "ket-qua-sai"}" data-dung="${dung}">
         <div class="dau-cau"><b>Phần I · Câu ${i + 1}</b>
           ${dung ? huyHieu("dung", "Đúng +" + vietSo(de.diemPhan1 ?? 0.25)) : huyHieu("sai", chon ? "Sai" : "Bỏ trống")}</div>
-        <div class="cau-hoi">${cau.noiDung}</div>
+        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
         <div class="lua-chon xem">
           ${cau.luaChon.map((lc, j) => {
             const chu = CHU_CAI[j];
@@ -411,7 +418,7 @@ function veXemLai(de, bl, ct) {
     return `
       <article class="cau ${lopCau}" data-dung="${soDung === 4}">
         <div class="dau-cau"><b>Phần II · Câu ${i + 1}</b>${huyHieu(loai, `${soDung}/4 ý · +${vietSo(diem)}`)}</div>
-        <div class="cau-hoi">${cau.noiDung}</div>
+        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
         <div class="y-dung-sai">
           ${cau.y.map((y, j) => {
             const tl = bl.phan2[i][j];
@@ -439,7 +446,7 @@ function veXemLai(de, bl, ct) {
       <article class="cau ${dung ? "ket-qua-dung" : "ket-qua-sai"}" data-dung="${dung}">
         <div class="dau-cau"><b>Phần III · Câu ${i + 1}</b>
           ${dung ? huyHieu("dung", "Đúng +" + vietSo(de.diemPhan3 ?? 0.5)) : huyHieu("sai", tl ? "Sai" : "Bỏ trống")}</div>
-        <div class="cau-hoi">${cau.noiDung}</div>
+        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
         <div class="so-sanh">
           <span>Bạn trả lời: <b class="${dung ? "mau-dung" : "mau-sai"}">${tl ? anToan(tl) : "(bỏ trống)"}</b></span>
           <span>Đáp án: <b>${vietSo(cau.dapAn)}</b></span>
@@ -519,10 +526,8 @@ async function guiKetQuaLenMayChu() {
 
 /* ================= KHỞI ĐỘNG ================= */
 
-veDanhSachDe();
-
 // Nếu học sinh lỡ tải lại trang khi đang làm bài -> mở lại đúng bài đó
-(function khoiPhucBaiDangLam() {
+function khoiPhucBaiDangLam() {
   let duLieu = null;
   try { duLieu = JSON.parse(localStorage.getItem(KHOA_LUU_TAM)); } catch (e) {}
   if (!duLieu) return;
@@ -530,4 +535,10 @@ veDanhSachDe();
   if (!de) { xoaLuuTam(); return; }
   trangThai.de = de;
   batDauLamBai(duLieu); // nếu đã quá giờ, đồng hồ sẽ tự nộp ngay
-})();
+}
+
+// Chờ js/tai-de.js nạp xong các file đề rồi mới vẽ
+DE_DA_TAI.then(() => {
+  veDanhSachDe();
+  khoiPhucBaiDangLam();
+});

@@ -28,6 +28,7 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
 
   if (!CAU_HINH.LINK_APPS_SCRIPT) {
     tt.textContent = "Chưa có link Apps Script trong js/config.js. Đang hiện dữ liệu mẫu.";
+    await DE_DA_TAI; // dữ liệu mẫu dựa trên đề đầu tiên
     tatCaKetQua = taoDuLieuMau();
     batDauHienThi();
     return;

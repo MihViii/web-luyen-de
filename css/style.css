@@ -106,6 +106,8 @@ button { cursor: pointer; }
 .cau { display: grid; gap: 12px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); scroll-margin-top: 90px; min-width: 0; }
 .cau-hoi { overflow-x: auto; }
 .cau-hoi b { font-family: var(--font-display); }
+/* Nền trắng để hình vẽ nét đen (PNG trong suốt) vẫn đọc được ở chế độ tối */
+.hinh-de { display: block; max-width: min(100%, 480px); height: auto; margin-top: 12px; padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
 .lua-chon { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .lua-chon label {
   display: flex; align-items: center; gap: 10px; padding: 8px 12px; min-width: 0;
