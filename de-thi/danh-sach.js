@@ -12,8 +12,11 @@
          └── de-02/
              └── de.js
 
-   THÊM ĐỀ MỚI:
-     1. Copy cả thư mục một đề có sẵn (vd toan/de-01 -> toan/de-02).
+   TẠO ĐỀ TỪ FILE PDF: mở admin.html -> "Tạo đề từ PDF" (tao-de.html).
+   Trang đó tự tạo thư mục đề và tự thêm vào danh sách bên dưới.
+
+   THÊM ĐỀ GÕ TAY:
+     1. Tạo thư mục mới (vd toan/de-02) và file de.js theo mẫu trong README (mục 5, Cách 2).
      2. Mở de.js trong thư mục mới, đổi "id" (KHÔNG được trùng đề khác),
         rồi sửa nội dung câu hỏi.
      3. Thêm đường dẫn thư mục vào DANH_SACH_THU_MUC_DE bên dưới.
@@ -40,5 +43,5 @@
 
 // Đường dẫn tính từ thư mục de-thi. Thứ tự ở đây là thứ tự hiện trên trang.
 const DANH_SACH_THU_MUC_DE = [
-  "toan/de-01",
+  "toan/de-khoi-dong-so-11",
 ];

@@ -18,6 +18,7 @@ Cấu trúc đề theo kỳ thi tốt nghiệp THPT từ 2025:
 web-luyen-de/
 ├── index.html          Trang học sinh (khung HTML của 4 màn hình)
 ├── admin.html          Trang thống kê cho gia sư
+├── tao-de.html         Trang tạo đề từ file PDF (cho gia sư)
 ├── css/
 │   └── style.css       Toàn bộ giao diện (màu, font, bố cục)
 ├── js/
@@ -25,13 +26,15 @@ web-luyen-de/
 │   ├── cham-diem.js    Logic chấm điểm (hàm thuần, không đụng giao diện)
 │   ├── tai-de.js       Nạp các file đề theo danh sách
 │   ├── app.js          Điều khiển trang học sinh
-│   └── admin.js        Điều khiển trang thống kê
+│   ├── admin.js        Điều khiển trang thống kê
+│   └── tao-de.js       Cắt câu từ PDF, xuất thư mục đề
 ├── de-thi/             Ngân hàng đề, mỗi đề một thư mục      ← THÊM ĐỀ Ở ĐÂY
 │   ├── danh-sach.js    Liệt kê các đề đang dùng
 │   └── toan/
-│       └── de-01/
+│       └── de-khoi-dong-so-11/
 │           ├── de.js   Nội dung đề
-│           └── *.png   Ảnh của đề (nếu có)
+│           ├── de.pdf  File PDF cho học sinh tải (đề tạo từ PDF)
+│           └── *.png   Ảnh của đề
 └── apps-script/
     └── Code.gs         Code dán vào Google Apps Script (máy chủ lưu kết quả)
 ```
@@ -89,14 +92,71 @@ Sau này thêm đề: upload thư mục đề mới (giữ đúng vị trí tron
 
 ## 5. Thêm đề mới
 
+Có hai cách: **tạo từ file PDF** (nhanh, không phải gõ đề) hoặc **gõ tay** (gõ công thức LaTeX, có lời giải từng câu).
+
+### Cách 1: Tạo đề từ PDF
+
+Mỗi câu là một ảnh cắt từ PDF, học sinh xem ảnh rồi chọn đáp án trên phiếu. File PDF được lưu kèm để học sinh bấm **Tải đề (PDF)** ở màn nhập tên.
+
+1. Mở `admin.html` (trên máy hoặc trên GitHub Pages), bấm **Tạo đề từ PDF**. Nên dùng **Chrome hoặc Edge**.
+2. Nhập môn, tên đề, thời gian. Trang hiện sẵn thư mục sẽ lưu, vd `de-thi/toan/de-thi-thu-so-2/`.
+3. Chọn file PDF. **File này học sinh tải về được, nên đừng để đáp án trong đó.**
+4. Chọn **Phần I** ở cột phải, kéo chuột khoanh từng câu trên trang PDF theo thứ tự (khoanh cả phương án A–D), rồi bấm chọn đáp án ngay dưới ảnh mỗi câu. Làm tiếp với Phần II (chọn Đ/S cho 4 ý) và Phần III (gõ số).
+   - Câu bị ngắt sang trang sau: bấm **Nối vùng** ở câu đó rồi khoanh nốt phần còn lại, hai vùng được ghép thành một ảnh.
+   - Khoanh sai: bấm **Xóa** rồi khoanh lại.
+5. Bấm **Lưu đề**, chọn thư mục `web-luyen-de` trên máy, bấm **Cho phép** khi Chrome hỏi quyền sửa. Trang tự tạo thư mục đề (ảnh `p1-01.png`..., `de.pdf`, `de.js`) và thêm đề vào `de-thi/danh-sach.js`.
+6. Mở trang học sinh trên máy xem thử, rồi **commit và push** lên GitHub.
+
+> Safari/Firefox không cho trang web ghi thẳng vào thư mục, nên sẽ tải về một file `.zip`: giải nén, chép thư mục đề vào `de-thi/<môn>/` và tự thêm dòng vào `danh-sach.js` như hướng dẫn hiện trên trang.
+
+Muốn sửa đáp án sau khi lưu: mở `de.js` của đề đó, đổi giá trị `dapAn`. Trang tạo đề chạy hoàn toàn trên máy, file PDF không bị gửi lên mạng.
+
+### Cách 2: Gõ tay
+
 Mỗi đề là một thư mục trong `de-thi/`, chia theo môn (`toan/`, `ly/`, `hoa/`... tùy ý đặt):
 
-1. Copy cả thư mục một đề có sẵn, vd `de-thi/toan/de-01` → `de-thi/toan/de-02`.
-2. Mở `de.js` trong thư mục mới và sửa (xem bên dưới).
+1. Tạo thư mục mới, vd `de-thi/toan/de-02`, trong đó tạo file `de.js` theo mẫu:
+   ```js
+   themDe({
+     id: "toan-de-02",
+     mon: "Toán",
+     ten: "Đề luyện tập số 2",
+     moTa: "Ôn tập đạo hàm, tích phân",
+     thoiGian: 90, // phút
+     diemPhan1: 0.25,
+     diemPhan3: 0.5,
+
+     phan1: [
+       {
+         noiDung: "Họ nguyên hàm của hàm số $f(x) = 3x^2$ là",
+         luaChon: ["$x^3 + C$", "$6x + C$", "$\\dfrac{x^3}{3} + C$", "$3x^3 + C$"],
+         dapAn: "A",
+         loiGiai: "$\\int 3x^2\\,dx = x^3 + C$." // không bắt buộc
+       }
+     ],
+
+     phan2: [
+       {
+         noiDung: "Cho hàm số $f(x) = x^3 - 3x^2 + 2$.",
+         y: [
+           { noiDung: "$f'(x) = 3x^2 - 6x$.", dapAn: true },
+           { noiDung: "Hàm số đồng biến trên $(0; 2)$.", dapAn: false },
+           { noiDung: "Giá trị cực tiểu bằng $-2$.", dapAn: true },
+           { noiDung: "$f(3) = 2$.", dapAn: true }
+         ]
+       }
+     ],
+
+     phan3: [
+       { noiDung: "Tính $\\displaystyle\\int_1^2 (2x + 1)\\,dx$.", dapAn: 4 }
+     ]
+   });
+   ```
+2. Sửa thông tin và câu hỏi (xem bên dưới). Mỗi phần thêm bao nhiêu câu cũng được, các câu cách nhau bằng dấu phẩy.
 3. Mở `de-thi/danh-sach.js`, thêm một dòng đường dẫn thư mục mới:
    ```js
    const DANH_SACH_THU_MUC_DE = [
-     "toan/de-01",
+     "toan/de-khoi-dong-so-11",
      "toan/de-02",
    ];
    ```
@@ -133,7 +193,7 @@ Trong `de.js` cần sửa:
 ```
 
 - Tên file nên viết **không dấu, không khoảng trắng** (`cau5.png`, không phải `Câu 5.png`), và gõ đúng hoa/thường: GitHub Pages phân biệt `Cau5.png` với `cau5.png`.
-- Dùng PNG hoặc JPG, ngang khoảng 800–1200px là đủ nét. Ảnh chụp điện thoại nên cắt gọn và giảm dung lượng trước, để học sinh dùng 4G tải nhanh.
+- Dùng PNG hoặc JPG. Ảnh hiện trên trang **bằng nửa chiều rộng thật** để nét trên màn hình retina: ảnh ngang 1000px hiện rộng 500px. Ảnh chụp điện thoại nên cắt gọn và giảm còn khoảng 800–1200px, để học sinh dùng 4G tải nhanh.
 - Hình trong đáp án A/B/C/D hoặc lời giải thì gõ thẻ ảnh với đường dẫn đầy đủ: `"<img class=\"hinh-de\" src=\"de-thi/toan/de-02/cau5-a.png\">"`.
 
 > Nếu thêm đề xong mà đề không hiện: mở **Inspect → Console** (Cmd + Option + I) để xem lỗi. Thường gặp: gõ sai đường dẫn trong `danh-sach.js` ("Không tìm thấy file đề"), trùng `id`, hoặc trong `de.js` thiếu dấu phẩy, thiếu `}`, quên gõ `\\`.
@@ -170,6 +230,8 @@ Học sinh chọn đề ─► nhập tên ─► làm bài (lưu tạm vào loc
 - **CORS:** gửi dữ liệu với `Content-Type: text/plain` để trình duyệt không gửi request "preflight" mà Apps Script không hỗ trợ.
 - **LockService** trong Apps Script: hai học sinh nộp cùng lúc không ghi đè nhau.
 - **Chống XSS:** tên học sinh được escape (`anToan()`) trước khi đưa vào HTML.
+- **Nạp đề bằng thẻ `<script>`:** `tai-de.js` tạo thẻ `<script>` cho từng `de.js` trong danh sách (không dùng `fetch`, nên mở thẳng file `index.html` vẫn chạy). Mỗi `de.js` gọi `themDe()`, hàm này ghi nhớ thư mục của đề qua `document.currentScript` để tính đường dẫn ảnh.
+- **Tạo đề từ PDF:** thư viện PDF.js vẽ từng trang ra `<canvas>`. Vùng khoanh lưu theo tỉ lệ 0–1 của trang nên không phụ thuộc trang đang hiện to hay nhỏ. Lúc lưu, `drawImage` cắt các vùng ra canvas mới rồi `toBlob` thành PNG. File được ghi thẳng vào thư mục project bằng **File System Access API** (`showDirectoryPicker`), trình duyệt không hỗ trợ thì đóng gói `.zip` bằng JSZip.
 
 **Giới hạn cần biết:**
 

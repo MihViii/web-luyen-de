@@ -52,6 +52,19 @@ function veHinh(de, cau) {
   return `<img class="hinh-de" src="${anToan(src)}" alt="Hình minh họa" loading="lazy">`;
 }
 
+// Ảnh câu hỏi hiện bằng nửa số pixel thật (ảnh rộng 1200px hiện rộng 600px), để nét trên màn hình retina.
+// Sự kiện load của ảnh không nổi bọt, nên bắt ở pha capture.
+document.addEventListener("load", (e) => {
+  if (e.target.classList && e.target.classList.contains("hinh-de")) {
+    e.target.style.width = e.target.naturalWidth / 2 + "px";
+  }
+}, true);
+
+// Phương án A-D của câu phần I. Đề cắt từ PDF không có (chữ nằm trong ảnh) -> 4 ô trống
+function phuongAn(cau) {
+  return cau.luaChon || CHU_CAI.map(() => "");
+}
+
 // Bảo MathJax vẽ lại công thức trong một vùng vừa thay đổi
 function veCongThuc(phanTu) {
   if (!window.MathJax || !MathJax.startup) return;
@@ -103,6 +116,7 @@ function veDanhSachDe() {
               <span>${de.thoiGian} phút</span>
               <span>${de.phan1.length + de.phan2.length + de.phan3.length} câu</span>
               <span>Thang ${vietSo(diemToiDa(de))} điểm</span>
+              ${de.pdf ? "<span>Có file PDF</span>" : ""}
             </div>
           </button>`).join("")}
       </div>
@@ -125,6 +139,13 @@ function moManThongTin() {
   $("tt-mo-ta").textContent =
     `${de.phan1.length} câu trắc nghiệm, ${de.phan2.length} câu đúng/sai, ` +
     `${de.phan3.length} câu trả lời ngắn. Thời gian ${de.thoiGian} phút, hết giờ bài tự nộp.`;
+  // Đề có file PDF (trường "pdf" trong de.js) thì hiện nút tải về
+  const taiPdf = $("tt-tai-pdf");
+  taiPdf.hidden = !de.pdf;
+  if (de.pdf) {
+    taiPdf.href = new URL(de.pdf, de.thuMuc).href;
+    taiPdf.download = de.id + ".pdf";
+  }
   $("loi-thong-tin").hidden = true;
   hienMan("man-thong-tin");
   $("o-ho-ten").focus();
@@ -178,25 +199,25 @@ function veToDe() {
 
   const phan1 = de.phan1.map((cau, i) => `
     <article class="cau" id="cau-p1-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
-      <div class="lua-chon">
-        ${cau.luaChon.map((lc, j) => `
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung || ""}${veHinh(de, cau)}</div>
+      <div class="lua-chon${cau.luaChon ? "" : " chi-chu"}">
+        ${phuongAn(cau).map((lc, j) => `
           <label>
             <input type="radio" name="p1-${i}" value="${CHU_CAI[j]}" ${bl.phan1[i] === CHU_CAI[j] ? "checked" : ""}>
             <span class="bong">${CHU_CAI[j]}</span>
-            <span>${lc}</span>
+            ${lc ? `<span>${lc}</span>` : ""}
           </label>`).join("")}
       </div>
     </article>`).join("");
 
   const phan2 = de.phan2.map((cau, i) => `
     <article class="cau" id="cau-p2-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung || ""}${veHinh(de, cau)}</div>
       <div class="y-dung-sai">
         ${cau.y.map((y, j) => `
           <div class="dong-y">
             <span class="chu-y">${"abcd"[j]})</span>
-            <span class="noi-dung-y">${y.noiDung}</span>
+            <span class="noi-dung-y">${y.noiDung || ""}</span>
             <span class="chon-ds">
               <label><input type="radio" name="p2-${i}-${j}" value="dung" ${bl.phan2[i][j] === true ? "checked" : ""}><span>Đ</span></label>
               <label><input type="radio" name="p2-${i}-${j}" value="sai" ${bl.phan2[i][j] === false ? "checked" : ""}><span>S</span></label>
@@ -207,7 +228,7 @@ function veToDe() {
 
   const phan3 = de.phan3.map((cau, i) => `
     <article class="cau" id="cau-p3-${i}">
-      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung}${veHinh(de, cau)}</div>
+      <div class="cau-hoi"><b>Câu ${i + 1}.</b> ${cau.noiDung || ""}${veHinh(de, cau)}</div>
       <div class="o-tra-loi">
         <input type="text" maxlength="4" data-p3="${i}" value="${anToan(bl.phan3[i])}"
                aria-label="Đáp án câu ${i + 1} phần III" autocomplete="off" spellcheck="false">
@@ -220,11 +241,11 @@ function veToDe() {
       <span class="nhan">${anToan(trangThai.hoTen)}${trangThai.lop ? " · Lớp " + anToan(trangThai.lop) : ""}</span>
       <h2>${de.ten}</h2>
     </div>
-    <div class="tieu-de-phan"><h2>Phần I</h2><p>Trắc nghiệm nhiều lựa chọn. Mỗi câu chọn một phương án.</p></div>
+    ${phan1 && `<div class="tieu-de-phan"><h2>Phần I</h2><p>Trắc nghiệm nhiều lựa chọn. Mỗi câu chọn một phương án.</p></div>`}
     ${phan1}
-    <div class="tieu-de-phan"><h2>Phần II</h2><p>Trắc nghiệm đúng sai. Mỗi ý a), b), c), d) chọn Đúng hoặc Sai.</p></div>
+    ${phan2 && `<div class="tieu-de-phan"><h2>Phần II</h2><p>Trắc nghiệm đúng sai. Mỗi ý a), b), c), d) chọn Đúng hoặc Sai.</p></div>`}
     ${phan2}
-    <div class="tieu-de-phan"><h2>Phần III</h2><p>Trả lời ngắn. Điền kết quả là một số, dùng dấu phẩy cho số thập phân.</p></div>
+    ${phan3 && `<div class="tieu-de-phan"><h2>Phần III</h2><p>Trả lời ngắn. Điền kết quả là một số, dùng dấu phẩy cho số thập phân.</p></div>`}
     ${phan3}`;
 
   veCongThuc($("to-de"));
@@ -267,7 +288,7 @@ function vePhieu() {
     { phan: 1, ten: "Phần I", soCau: de.phan1.length },
     { phan: 2, ten: "Phần II", soCau: de.phan2.length },
     { phan: 3, ten: "Phần III", soCau: de.phan3.length }
-  ];
+  ].filter((n) => n.soCau > 0); // đề thiếu phần nào thì phiếu bỏ phần đó
   let daLam = 0, tong = 0;
 
   $("luoi-phieu").innerHTML = nhom.map((n) => `
@@ -398,12 +419,12 @@ function veXemLai(de, bl, ct) {
       <article class="cau ${dung ? "ket-qua-dung" : "ket-qua-sai"}" data-dung="${dung}">
         <div class="dau-cau"><b>Phần I · Câu ${i + 1}</b>
           ${dung ? huyHieu("dung", "Đúng +" + vietSo(de.diemPhan1 ?? 0.25)) : huyHieu("sai", chon ? "Sai" : "Bỏ trống")}</div>
-        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
-        <div class="lua-chon xem">
-          ${cau.luaChon.map((lc, j) => {
+        <div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>
+        <div class="lua-chon xem${cau.luaChon ? "" : " chi-chu"}">
+          ${phuongAn(cau).map((lc, j) => {
             const chu = CHU_CAI[j];
             const lop = chu === cau.dapAn ? "la-dap-an" : chu === chon ? "chon-sai" : "";
-            return `<label class="${lop}"><span class="bong">${chu}</span><span>${lc}</span></label>`;
+            return `<label class="${lop}"><span class="bong">${chu}</span>${lc ? `<span>${lc}</span>` : ""}</label>`;
           }).join("")}
         </div>
         ${loiGiai(cau)}
@@ -418,7 +439,7 @@ function veXemLai(de, bl, ct) {
     return `
       <article class="cau ${lopCau}" data-dung="${soDung === 4}">
         <div class="dau-cau"><b>Phần II · Câu ${i + 1}</b>${huyHieu(loai, `${soDung}/4 ý · +${vietSo(diem)}`)}</div>
-        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
+        <div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>
         <div class="y-dung-sai">
           ${cau.y.map((y, j) => {
             const tl = bl.phan2[i][j];
@@ -427,7 +448,7 @@ function veXemLai(de, bl, ct) {
             return `
               <div class="dong-y">
                 <span class="chu-y">${"abcd"[j]})</span>
-                <span class="noi-dung-y">${y.noiDung}</span>
+                <span class="noi-dung-y">${y.noiDung || ""}</span>
                 <span class="so-sanh">
                   <span>Bạn: <b class="${ok ? "mau-dung" : "mau-sai"}">${chuTl}</b></span>
                   <span>Đáp án: <b>${y.dapAn ? "Đ" : "S"}</b></span>
@@ -446,7 +467,7 @@ function veXemLai(de, bl, ct) {
       <article class="cau ${dung ? "ket-qua-dung" : "ket-qua-sai"}" data-dung="${dung}">
         <div class="dau-cau"><b>Phần III · Câu ${i + 1}</b>
           ${dung ? huyHieu("dung", "Đúng +" + vietSo(de.diemPhan3 ?? 0.5)) : huyHieu("sai", tl ? "Sai" : "Bỏ trống")}</div>
-        <div class="cau-hoi">${cau.noiDung}${veHinh(de, cau)}</div>
+        <div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>
         <div class="so-sanh">
           <span>Bạn trả lời: <b class="${dung ? "mau-dung" : "mau-sai"}">${tl ? anToan(tl) : "(bỏ trống)"}</b></span>
           <span>Đáp án: <b>${vietSo(cau.dapAn)}</b></span>

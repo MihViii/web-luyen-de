@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tạo Đề Từ PDF</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="khung khung-rong">
+    <header class="dau-trang">
+      <div>
+        <span class="nhan">Dành cho gia sư</span>
+        <h1>Tạo đề từ PDF</h1>
+      </div>
+      <a class="nut" href="admin.html">Về sổ điểm</a>
+    </header>
+
+    <!-- ===== BƯỚC 1: THÔNG TIN ĐỀ ===== -->
+    <section class="buoc">
+      <h2><span class="so-buoc">1</span> Thông tin đề</h2>
+      <form class="luoi-thong-tin" id="form-de" onsubmit="return false">
+        <label>Môn
+          <input id="o-mon" list="ds-mon" value="Toán">
+        </label>
+        <datalist id="ds-mon">
+          <option value="Toán"></option>
+          <option value="Vật lý"></option>
+          <option value="Hóa học"></option>
+          <option value="Sinh học"></option>
+        </datalist>
+        <label>Tên đề
+          <input id="o-ten" placeholder="Đề thi thử số 2">
+        </label>
+        <label>Mô tả (không bắt buộc)
+          <input id="o-mo-ta" placeholder="Thi thử THPT Chuyên ... lần 1">
+        </label>
+        <label>Thời gian (phút)
+          <input id="o-thoi-gian" type="number" min="1" value="90">
+        </label>
+        <label>Điểm mỗi câu phần I
+          <input id="o-diem1" type="number" min="0" step="0.05" value="0.25">
+        </label>
+        <label>Điểm mỗi câu phần III
+          <input id="o-diem3" type="number" min="0" step="0.05" value="0.5">
+        </label>
+      </form>
+      <p class="goi-y">Đề sẽ lưu vào thư mục <code id="xem-duong-dan"></code></p>
+    </section>
+
+    <!-- ===== BƯỚC 2: CHỌN PDF ===== -->
+    <section class="buoc">
+      <h2><span class="so-buoc">2</span> Chọn file PDF</h2>
+      <input type="file" id="o-pdf" accept="application/pdf">
+      <p class="goi-y" id="tt-pdf">File PDF này cũng là file học sinh bấm "Tải đề" sẽ nhận được, nên đừng để đáp án trong đó.</p>
+    </section>
+
+    <!-- ===== BƯỚC 3: CẮT CÂU ===== -->
+    <section class="buoc" id="buoc-cat" hidden>
+      <h2><span class="so-buoc">3</span> Cắt từng câu, chọn đáp án</h2>
+      <p class="goi-y">Chọn phần ở cột bên phải, rồi kéo chuột khoanh từng câu trên trang PDF theo thứ tự (khoanh cả phương án A, B, C, D). Câu bị ngắt sang trang sau: bấm "Nối vùng" ở câu đó rồi khoanh nốt phần còn lại.</p>
+      <div class="bo-cuc-cat">
+        <div class="cac-trang" id="cac-trang"></div>
+        <aside class="bang-cau" id="bang-cau" aria-label="Danh sách câu đã cắt">
+          <div class="loc-ket-qua" id="tab-phan" role="group" aria-label="Chọn phần">
+            <button type="button" data-phan="1" aria-pressed="true">Phần I · <span>0</span></button>
+            <button type="button" data-phan="2" aria-pressed="false">Phần II · <span>0</span></button>
+            <button type="button" data-phan="3" aria-pressed="false">Phần III · <span>0</span></button>
+          </div>
+          <p class="goi-y" id="goi-y-che-do"></p>
+          <div id="ds-cau" class="ds-cau"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ===== BƯỚC 4: LƯU ===== -->
+    <section class="buoc" id="buoc-luu" hidden>
+      <h2><span class="so-buoc">4</span> Lưu đề</h2>
+      <p class="goi-y">Bấm "Lưu vào thư mục project" rồi chọn thư mục <b>web-luyen-de</b> trên máy. Trang sẽ tạo thư mục đề (ảnh từng câu, file PDF, de.js) và tự thêm đề vào de-thi/danh-sach.js. Sau đó commit và push lên GitHub như bình thường.
+        Nếu Chrome báo không mở được thư mục (thường do thư mục nằm trong iCloud Drive), dùng nút "Tải về file .zip".</p>
+      <div class="hang-nut">
+        <button type="button" class="nut nut-chinh" id="nut-luu" data-cach="thu-muc">Lưu vào thư mục project</button>
+        <button type="button" class="nut" id="nut-zip" data-cach="zip">Tải về file .zip</button>
+      </div>
+      <p class="trang-thai-luu" id="tt-luu"></p>
+    </section>
+  </div>
+
+  <!-- PDF.js: đọc và vẽ file PDF; JSZip: đóng gói .zip cho trình duyệt không ghi thẳng vào thư mục được -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Nạp các đề có sẵn để kiểm tra trùng tên -->
+  <script src="de-thi/danh-sach.js"></script>
+  <script src="js/tai-de.js"></script>
+  <script src="js/cham-diem.js"></script>
+  <script src="js/tao-de.js"></script>
+</body>
+</html>
