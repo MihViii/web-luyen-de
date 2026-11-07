@@ -1,6 +1,6 @@
 # Phòng Luyện Đề
 
-Trang web để học sinh chọn đề, làm bài có đếm giờ, nộp bài và xem điểm ngay. Kết quả tự ghi vào Google Sheet của gia sư, kèm trang thống kê có mật khẩu.
+Trang web để học sinh chọn đề, làm bài có đếm giờ, nộp bài và xem điểm ngay. Kết quả tự ghi vào Google Sheet của gia sư, kèm trang thống kê có mật khẩu, trong đó gia sư mở được bài làm của từng học sinh để xem sai câu nào.
 
 Cấu trúc đề theo kỳ thi tốt nghiệp THPT từ 2025:
 
@@ -24,6 +24,7 @@ web-luyen-de/
 ├── js/
 │   ├── config.js       Cấu hình: link Apps Script, tên lớp   ← SỬA FILE NÀY
 │   ├── cham-diem.js    Logic chấm điểm (hàm thuần, không đụng giao diện)
+│   ├── xem-lai.js      Vẽ phần xem lại từng câu (dùng chung cho trang học sinh và thống kê)
 │   ├── tai-de.js       Nạp các file đề theo danh sách
 │   ├── app.js          Điều khiển trang học sinh
 │   ├── admin.js        Điều khiển trang thống kê
@@ -73,6 +74,18 @@ Lúc này trang chạy ở **chế độ thử**: làm bài, chấm điểm bìn
 Thử làm một bài và nộp: trong Sheet sẽ xuất hiện trang tính **KetQua** với một dòng mới.
 
 > Mỗi lần **sửa Code.gs**, phải vào **Triển khai → Quản lý các bản triển khai → sửa (bút chì) → Phiên bản: Phiên bản mới → Triển khai** thì thay đổi mới có hiệu lực. Link giữ nguyên.
+
+### Xem bài làm của từng học sinh
+
+Mở `admin.html`, nhập mật khẩu, bấm **Tải kết quả**, rồi bấm vào một dòng (hoặc nút **Xem bài**) trong bảng điểm. Trang hiện:
+
+- Điểm từng phần và một lưới ô số câu tô màu: xanh là đúng, đỏ là sai, vàng là đúng một phần (Phần II), trắng là bỏ trống. Rê chuột lên ô để xem học sinh chọn gì, bấm vào ô để nhảy tới câu đó.
+- Từng câu kèm ảnh/đề bài: ô đỏ là phương án học sinh chọn sai, ô xanh là đáp án. Phần II, III ghi rõ học sinh trả lời gì và đáp án là gì. Nút **Chỉ câu sai** ẩn các câu làm đúng.
+- Nút **Bài trước / Bài sau** đi lần lượt theo đúng thứ tự và bộ lọc đang chọn trong bảng (vd lọc một đề, sắp theo tên để xem hết cả lớp). Nút Back của trình duyệt/điện thoại quay về bảng điểm.
+
+Bài làm được **chấm lại theo đáp án hiện tại trong `de.js`**. Nếu bạn sửa đáp án sau khi học sinh đã nộp, trang ghi chú điểm lúc nộp bên cạnh để bạn biết.
+
+> Bản Code.gs cũ không gửi bài làm về trang thống kê. Nếu bấm Xem bài mà báo "Máy chủ chưa gửi bài làm về", hãy mở Apps Script, trong hàm `doGet` thêm dấu phẩy vào cuối dòng `chiTiet: docJson(r[12])` rồi thêm ngay bên dưới dòng `baiLam: docJson(r[13])`, sau đó triển khai phiên bản mới như trên. Đừng dán đè cả file `Code.gs` trong máy lên, vì file đó để mật khẩu mẫu `doi-mat-khau-nay` (nếu lỡ dán thì sửa lại `MAT_KHAU`). Các bài nộp từ trước vẫn xem được, vì bài làm vẫn luôn được lưu ở cột **Bài làm** trong Sheet.
 
 ---
 
@@ -217,6 +230,8 @@ Học sinh chọn đề ─► nhập tên ─► làm bài (lưu tạm vào loc
                                                            ─► thêm dòng vào Sheet
                                                                     │
             admin.html ─► fetch GET (kèm mật khẩu) ─► doGet ─► trả JSON ─► bảng thống kê
+                                                                             │
+                                                     bấm một dòng ─► chamBai(de, baiLam) ─► xem lại từng câu
 ```
 
 **Các điểm kỹ thuật chính:**
@@ -229,7 +244,8 @@ Học sinh chọn đề ─► nhập tên ─► làm bài (lưu tạm vào loc
 - **So sánh số thực:** phần III dùng `Math.abs(a - b) < 1e-9` vì máy tính tính `0.1 + 0.2 = 0.30000000000000004`.
 - **CORS:** gửi dữ liệu với `Content-Type: text/plain` để trình duyệt không gửi request "preflight" mà Apps Script không hỗ trợ.
 - **LockService** trong Apps Script: hai học sinh nộp cùng lúc không ghi đè nhau.
-- **Chống XSS:** tên học sinh được escape (`anToan()`) trước khi đưa vào HTML.
+- **Chống XSS:** tên học sinh được escape (`anToan()`) trước khi đưa vào HTML. Bài làm đọc từ Sheet được lọc lại (`chuanHoaBaiLam()` trong `admin.js`) vì ai có link Apps Script cũng gửi dữ liệu lên được.
+- **Dùng chung code xem lại:** `xem-lai.js` chứa `veXemLai()`, `veBangDiem()`, nên trang học sinh và trang thống kê hiện bài giống hệt nhau. Trang thống kê không lưu kết quả chấm sẵn mà chấm lại từ `baiLam` + đề hiện tại.
 - **Nạp đề bằng thẻ `<script>`:** `tai-de.js` tạo thẻ `<script>` cho từng `de.js` trong danh sách (không dùng `fetch`, nên mở thẳng file `index.html` vẫn chạy). Mỗi `de.js` gọi `themDe()`, hàm này ghi nhớ thư mục của đề qua `document.currentScript` để tính đường dẫn ảnh.
 - **Tạo đề từ PDF:** thư viện PDF.js vẽ từng trang ra `<canvas>`. Vùng khoanh lưu theo tỉ lệ 0–1 của trang nên không phụ thuộc trang đang hiện to hay nhỏ. Lúc lưu, `drawImage` cắt các vùng ra canvas mới rồi `toBlob` thành PNG. File được ghi thẳng vào thư mục project bằng **File System Access API** (`showDirectoryPicker`), trình duyệt không hỗ trợ thì đóng gói `.zip` bằng JSZip.
 

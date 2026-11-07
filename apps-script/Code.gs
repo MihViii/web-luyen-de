@@ -10,8 +10,8 @@
      5. Copy link Web App, dán vào js/config.js.
 
    - doPost: trang học sinh gửi kết quả lên  -> thêm 1 dòng vào Sheet
-   - doGet : trang thống kê xin dữ liệu      -> trả về toàn bộ kết quả
-             (bắt buộc đúng mật khẩu)
+   - doGet : trang thống kê xin dữ liệu      -> trả về toàn bộ kết quả,
+             kể cả bài làm từng học sinh (bắt buộc đúng mật khẩu)
    ===================================================================== */
 
 const MAT_KHAU = "doi-mat-khau-nay"; // <-- ĐỔI THÀNH MẬT KHẨU CỦA BẠN
@@ -86,7 +86,8 @@ function doGet(e) {
     hoTen: r[1], lop: r[2], maDe: r[3], tenDe: r[4], mon: r[5],
     diem: r[6], diem1: r[7], diem2: r[8], diem3: r[9], diemToiDa: r[10],
     giayDaLam: r[11],
-    chiTiet: docJson(r[12])
+    chiTiet: docJson(r[12]),
+    baiLam: docJson(r[13]) // đáp án học sinh đã chọn, để gia sư xem lại từng câu
   }));
   return traVeJson({ ok: true, ketQua: dong });
 }

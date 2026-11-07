@@ -257,6 +257,31 @@ tr:last-child td { border-bottom: 0; }
 .hang-cong-cu { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
 .hang-cong-cu select, .hang-cong-cu input { padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .trong { padding: 32px 20px; text-align: center; color: var(--muted); }
+th:not([data-sap]) { cursor: default; }
+.nut-nho { padding: 4px 12px; font-size: 13px; }
+#bang tr[data-i] { cursor: pointer; }
+#bang tr[data-i]:hover td { background: var(--paper); }
+#bang tr.vua-xem td { background: var(--accent-soft); }
+
+/* Màn xem bài làm của một học sinh */
+.thanh-xem-bai { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
+.thanh-xem-bai .hang-nut { align-items: center; }
+.tom-tat-bai {
+  display: grid; gap: 14px; padding: 18px 20px; margin-bottom: 20px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.tom-tat-bai .luoi-phieu { display: flex; flex-wrap: wrap; gap: 14px 32px; }
+.tom-tat-bai .o-so { display: flex; flex-wrap: wrap; gap: 6px; }
+.tom-tat-bai .o-so button { width: 34px; }
+.chu-thich { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: 13px; color: var(--muted); }
+.chu-thich span::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px;
+  border-radius: 50%; border: 1.5px solid var(--line);
+}
+.chu-thich .dung::before { background: var(--good); border-color: var(--good); }
+.chu-thich .mot-phan::before { background: var(--warn); border-color: var(--warn); }
+.chu-thich .sai::before { background: var(--red); border-color: var(--red); }
+.thong-bao-xem { margin: 0; padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); color: var(--muted); }
 
 /* ---------- Trang tạo đề từ PDF ---------- */
 .khung-rong { max-width: 1440px; }

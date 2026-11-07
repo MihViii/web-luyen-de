@@ -2,17 +2,22 @@
    TRANG THỐNG KÊ (admin.html)
    Lấy dữ liệu từ Apps Script (doGet) bằng mật khẩu, rồi tính:
    số lượt, điểm trung bình/cao/thấp, tỉ lệ đúng từng câu, bảng điểm.
+   Bấm một dòng trong bảng để mở bài làm của học sinh đó (màn "xem bài").
+   anToan, vietSo, veBangDiem, veXemLai... nằm trong js/xem-lai.js.
    ===================================================================== */
 
 const $ = (id) => document.getElementById(id);
+const SO_LA_MA = ["", "I", "II", "III"];
+
 let tatCaKetQua = [];
 let sapXep = { cot: "nopLuc", giam: true };
+let dsDangHien = [];       // các dòng đang hiện trong bảng, đúng thứ tự sắp xếp (để đi bài trước/bài sau)
+let viTriDangXem = -1;     // vị trí trong dsDangHien của bài đang mở
+let chiXemCauSai = false;  // bộ lọc "Chỉ câu sai", giữ nguyên khi chuyển sang bài khác
+let daThemLichSu = false;  // đã pushState chưa, để nút Back của trình duyệt/điện thoại đóng màn xem bài
 
-function anToan(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-const vietSo = (x, chuSo = 2) => (Math.round(x * 10 ** chuSo) / 10 ** chuSo).toString().replace(".", ",");
+// Điểm trung bình có thể dài (7.333333) -> làm tròn 2 chữ số, đổi dấu chấm thành phẩy
+const vietDiem = (x, chuSo = 2) => vietSo(Math.round(x * 10 ** chuSo) / 10 ** chuSo);
 const phutGiay = (g) => `${Math.floor(g / 60)}:${String(Math.round(g % 60)).padStart(2, "0")}`;
 const ngayGio = (iso) => {
   const d = new Date(iso);
@@ -39,8 +44,13 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
     const url = CAU_HINH.LINK_APPS_SCRIPT + "?key=" + encodeURIComponent(matKhau);
     const duLieu = await (await fetch(url)).json();
     if (!duLieu.ok) throw new Error(duLieu.loi);
+    await DE_DA_TAI; // cần đề (đáp án, ảnh) để xem lại bài làm
     tatCaKetQua = duLieu.ketQua;
     tt.textContent = `Đã tải ${tatCaKetQua.length} lượt làm bài`;
+    // Code.gs cũ chưa trả về bài làm: nhắc cập nhật
+    if (tatCaKetQua.length && !("baiLam" in tatCaKetQua[0])) {
+      tt.textContent += ". Muốn xem bài làm từng học sinh: cập nhật Code.gs và triển khai phiên bản mới (README mục 3)";
+    }
     try { sessionStorage.setItem("mat-khau-so-diem", matKhau); } catch (e) {}
     batDauHienThi();
   } catch (loi) {
@@ -92,9 +102,9 @@ function veTheSo(ds) {
   $("the-so").innerHTML = [
     o("Lượt làm", ds.length),
     o("Học sinh", soHocSinh),
-    o("Điểm TB", diem.length ? vietSo(tb) : "–"),
-    o("Cao nhất", diem.length ? vietSo(Math.max(...diem)) : "–"),
-    o("Thấp nhất", diem.length ? vietSo(Math.min(...diem)) : "–")
+    o("Điểm TB", diem.length ? vietDiem(tb) : "–"),
+    o("Cao nhất", diem.length ? vietDiem(Math.max(...diem)) : "–"),
+    o("Thấp nhất", diem.length ? vietDiem(Math.min(...diem)) : "–")
   ].join("");
 }
 
@@ -135,42 +145,220 @@ function veBang(ds) {
     const kq = typeof x === "number" ? x - y : String(x).localeCompare(String(y), "vi");
     return giam ? -kq : kq;
   });
+  dsDangHien = sx;
   document.querySelectorAll("th[data-sap]").forEach((th) => {
     th.textContent = th.textContent.replace(/ [▲▼]$/, "") + (th.dataset.sap === cot ? (giam ? " ▼" : " ▲") : "");
   });
-  $("bang").innerHTML = sx.length ? sx.map((r) => `
-    <tr>
-      <td>${ngayGio(r.nopLuc)}</td>
+  $("bang").innerHTML = sx.length ? sx.map((r, i) => `
+    <tr data-i="${i}">
+      <td>${anToan(ngayGio(r.nopLuc))}</td>
       <td>${anToan(r.hoTen)}</td>
       <td>${anToan(r.lop)}</td>
       <td>${anToan(r.tenDe)}</td>
-      <td class="so"><b>${vietSo(r.diem)}</b></td>
-      <td class="so">${vietSo(r.diem1)}</td>
-      <td class="so">${vietSo(r.diem2)}</td>
-      <td class="so">${vietSo(r.diem3)}</td>
+      <td class="so"><b>${vietDiem(r.diem)}</b></td>
+      <td class="so">${vietDiem(r.diem1)}</td>
+      <td class="so">${vietDiem(r.diem2)}</td>
+      <td class="so">${vietDiem(r.diem3)}</td>
       <td class="so">${phutGiay(r.giayDaLam)}</td>
+      <td><button type="button" class="nut nut-nho">Xem bài</button></td>
     </tr>`).join("")
-    : `<tr><td colspan="9" class="trong">Chưa có bài nộp nào khớp bộ lọc.</td></tr>`;
+    : `<tr><td colspan="10" class="trong">Chưa có bài nộp nào khớp bộ lọc.</td></tr>`;
+}
+
+// Bấm vào dòng nào (hoặc nút "Xem bài") thì mở bài làm của dòng đó
+$("bang").addEventListener("click", (e) => {
+  const dong = e.target.closest("tr[data-i]");
+  if (dong) moBai(+dong.dataset.i);
+});
+
+/* ---------- Xem bài làm của một học sinh ---------- */
+
+function hienMan(id) {
+  $("man-bang-diem").hidden = id !== "man-bang-diem";
+  $("man-xem-bai").hidden = id !== "man-xem-bai";
+}
+
+function moBai(viTri) {
+  const r = dsDangHien[viTri];
+  if (!r) return;
+  viTriDangXem = viTri;
+
+  $("xb-de").textContent = [r.mon, r.tenDe].filter(Boolean).join(" · ");
+  $("xb-ten").textContent = r.hoTen + (r.lop ? " · " + r.lop : "");
+  $("xb-vi-tri").textContent = `Bài ${viTri + 1}/${dsDangHien.length}`;
+  $("nut-bai-truoc").disabled = viTri === 0;
+  $("nut-bai-sau").disabled = viTri === dsDangHien.length - 1;
+
+  const khung = $("xb-noi-dung");
+  khung.innerHTML = veBaiLam(r);
+  datBoLoc(chiXemCauSai);
+  hienMan("man-xem-bai");
+  window.scrollTo(0, 0);
+  veCongThuc(khung);
+
+  if (!daThemLichSu) {
+    history.pushState({ xemBai: true }, "");
+    daThemLichSu = true;
+  }
+}
+
+function dongBai() {
+  hienMan("man-bang-diem");
+  // Cuộn tới dòng vừa xem và tô nhẹ, để biết mình đang xem tới bài nào
+  document.querySelectorAll("#bang tr.vua-xem").forEach((tr) => tr.classList.remove("vua-xem"));
+  const dong = document.querySelector(`#bang tr[data-i="${viTriDangXem}"]`);
+  if (dong) {
+    dong.classList.add("vua-xem");
+    dong.scrollIntoView({ block: "center" });
+  }
+}
+
+$("nut-dong-bai").addEventListener("click", () => {
+  if (daThemLichSu) history.back(); // sự kiện popstate bên dưới sẽ đóng màn
+  else dongBai();
+});
+window.addEventListener("popstate", () => {
+  daThemLichSu = false;
+  if (!$("man-xem-bai").hidden) dongBai();
+});
+$("nut-bai-truoc").addEventListener("click", () => moBai(viTriDangXem - 1));
+$("nut-bai-sau").addEventListener("click", () => moBai(viTriDangXem + 1));
+
+$("xb-noi-dung").addEventListener("click", (e) => {
+  const nutLoc = e.target.closest("button[data-loc]");
+  if (nutLoc) { datBoLoc(nutLoc.dataset.loc === "sai"); return; }
+
+  // Bấm số câu trên lưới -> cuộn tới câu đó
+  const o = e.target.closest("button[data-den]");
+  if (!o) return;
+  const cau = $(o.dataset.den);
+  if (cau.hidden) datBoLoc(false); // câu làm đúng đang bị lọc ẩn thì hiện lại hết
+  cau.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+// Lọc "Tất cả" / "Chỉ câu sai"
+function datBoLoc(chiCauSai) {
+  chiXemCauSai = chiCauSai;
+  document.querySelectorAll("#xb-loc button").forEach((b) =>
+    b.setAttribute("aria-pressed", String((b.dataset.loc === "sai") === chiCauSai)));
+  document.querySelectorAll("#xb-xem-lai .cau").forEach((c) => {
+    c.hidden = chiCauSai && c.dataset.dung === "true";
+  });
+}
+
+const thongBao = (chu) => `<p class="thong-bao-xem">${chu}</p>`;
+
+// Nội dung màn xem bài: điểm, lưới ô đúng/sai, rồi từng câu
+function veBaiLam(r) {
+  const de = DANH_SACH_DE.find((d) => d.id === r.maDe);
+  if (!de) {
+    return thongBao(`Không tìm thấy đề có mã <b>${anToan(r.maDe)}</b> trong <code>de-thi/danh-sach.js</code>
+      (đề đã bị xóa, tạm ẩn hoặc đổi id), nên không xem lại được từng câu.`);
+  }
+  if (!("baiLam" in r)) {
+    return thongBao(`Máy chủ chưa gửi bài làm về. Trong Apps Script, thêm dòng <code>baiLam: docJson(r[13])</code>
+      vào hàm doGet (xem <code>apps-script/Code.gs</code>), triển khai phiên bản mới (README mục 3), rồi bấm <b>Tải kết quả</b> lại.`);
+  }
+  if (!r.baiLam) {
+    return thongBao("Lượt nộp này không có dữ liệu bài làm (ô “Bài làm” trong Google Sheet bị trống hoặc hỏng).");
+  }
+
+  const bl = chuanHoaBaiLam(de, r.baiLam);
+  const kq = chamBai(de, bl); // chấm lại theo đáp án hiện tại trong de.js
+  const lechDiem = Math.abs(kq.tong - Number(r.diem)) > 1e-9;
+
+  const thongTin = `
+    <span>Nộp lúc ${anToan(ngayGio(r.nopLuc))}</span>
+    <span>Thời gian làm ${phutGiay(r.giayDaLam)}</span>
+    ${lechDiem ? `<span class="mau-sai">Điểm trên chấm lại theo đáp án hiện tại trong de.js. Lúc nộp,
+      học sinh được ${vietDiem(r.diem)} điểm (có thể đáp án đã được sửa sau đó).</span>` : ""}`;
+
+  return `
+    ${veBangDiem(de, kq, thongTin)}
+    ${veTomTat(de, bl, kq.chiTiet)}
+    <div class="loc-ket-qua" id="xb-loc" role="group" aria-label="Lọc câu">
+      <button type="button" data-loc="tat-ca">Tất cả</button>
+      <button type="button" data-loc="sai">Chỉ câu sai</button>
+    </div>
+    <div class="to-de" id="xb-xem-lai">${veXemLai(de, bl, kq.chiTiet, "Học sinh")}</div>`;
+}
+
+// Lưới số câu tô màu như phiếu trả lời: nhìn một lần là biết sai câu nào, bấm để tới câu đó
+function veTomTat(de, bl, ct) {
+  const o = (phan, i, lop, moTa) =>
+    `<button type="button" class="${lop}" data-den="xem-p${phan}-${i}" title="Câu ${i + 1}: ${moTa}"
+       aria-label="Phần ${SO_LA_MA[phan]} câu ${i + 1}: ${moTa}">${i + 1}</button>`;
+
+  const nhom = [
+    de.phan1.map((cau, i) => {
+      const chon = bl.phan1[i];
+      if (!chon) return o(1, i, "", "bỏ trống");
+      return ct.phan1[i] ? o(1, i, "dung", `đúng (${chon})`) : o(1, i, "sai", `chọn ${chon}, đáp án ${cau.dapAn}`);
+    }),
+    de.phan2.map((cau, i) => {
+      if (bl.phan2[i].every((v) => v === null)) return o(2, i, "", "bỏ trống");
+      const soDung = ct.phan2[i];
+      return o(2, i, soDung === 4 ? "dung" : soDung === 0 ? "sai" : "mot-phan", `đúng ${soDung}/4 ý`);
+    }),
+    de.phan3.map((cau, i) => {
+      const tl = anToan(bl.phan3[i].trim());
+      if (!tl) return o(3, i, "", "bỏ trống");
+      return ct.phan3[i] ? o(3, i, "dung", `đúng (${tl})`) : o(3, i, "sai", `ghi ${tl}, đáp án ${vietSo(cau.dapAn)}`);
+    })
+  ];
+
+  return `
+    <div class="tom-tat-bai">
+      <div class="luoi-phieu">
+        ${nhom.map((cacO, k) => cacO.length
+          ? `<div><h3>Phần ${SO_LA_MA[k + 1]}</h3><div class="o-so">${cacO.join("")}</div></div>` : "").join("")}
+      </div>
+      <p class="chu-thich">
+        <span class="dung">Đúng</span><span class="mot-phan">Đúng một phần</span><span class="sai">Sai</span><span>Bỏ trống</span>
+      </p>
+    </div>`;
+}
+
+// Bài làm lưu trong Sheet có thể không khớp đề hiện tại (đề bị thêm/bớt câu sau khi học sinh nộp),
+// hoặc bị gửi bậy (ai cũng gửi được lên Apps Script). Giữ lại giá trị hợp lệ, chỗ thiếu coi như bỏ trống.
+function chuanHoaBaiLam(de, bl) {
+  const p1 = (bl && bl.phan1) || [], p2 = (bl && bl.phan2) || [], p3 = (bl && bl.phan3) || [];
+  return {
+    phan1: de.phan1.map((_, i) => (CHU_CAI.includes(p1[i]) ? p1[i] : null)),
+    phan2: de.phan2.map((cau, i) => cau.y.map((_, j) => {
+      const v = Array.isArray(p2[i]) ? p2[i][j] : null;
+      return typeof v === "boolean" ? v : null;
+    })),
+    phan3: de.phan3.map((_, i) => (p3[i] == null ? "" : String(p3[i])))
+  };
 }
 
 /* ---------- Dữ liệu mẫu khi chưa kết nối Google Sheet ---------- */
 function taoDuLieuMau() {
   const de = DANH_SACH_DE[0];
+  if (!de) return [];
   const ten = ["(Mẫu) Học sinh A", "(Mẫu) Học sinh B", "(Mẫu) Học sinh C", "(Mẫu) Học sinh D", "(Mẫu) Học sinh E"];
   return ten.map((hoTen, k) => {
     const ngauNhien = (i) => ((i * 7 + k * 13) % 10) / 10; // giả lập cố định, không đổi mỗi lần tải
-    const phan1 = de.phan1.map((_, i) => ngauNhien(i) < 0.75);
-    const phan2 = de.phan2.map((_, i) => 1 + ((i + k) % 4));
-    const phan3 = de.phan3.map((_, i) => ngauNhien(i + 3) < 0.5);
-    const d1 = phan1.filter(Boolean).length * 0.25;
-    const d2 = phan2.reduce((t, s) => t + [0, 0.1, 0.25, 0.5, 1][s], 0);
-    const d3 = phan3.filter(Boolean).length * 0.5;
+    const chuKhac = (dapAn, i) => CHU_CAI[(CHU_CAI.indexOf(dapAn) + 1 + (i % 3)) % 4];
+    const baiLam = {
+      phan1: de.phan1.map((cau, i) => {
+        const x = ngauNhien(i);
+        return x < 0.7 ? cau.dapAn : x < 0.9 ? chuKhac(cau.dapAn, i) : null;
+      }),
+      phan2: de.phan2.map((cau, i) => cau.y.map((y, j) => (j <= (i + k) % 4 ? y.dapAn : !y.dapAn))),
+      phan3: de.phan3.map((cau, i) => {
+        const x = ngauNhien(i + 3);
+        return x < 0.5 ? vietSo(cau.dapAn) : x < 0.8 ? vietSo(cau.dapAn + 1) : "";
+      })
+    };
+    const kq = chamBai(de, baiLam);
     return {
       nopLuc: new Date(Date.now() - k * 3600e3).toISOString(),
       hoTen, lop: k % 2 ? "12A1" : "12A2", maDe: de.id, tenDe: de.ten, mon: de.mon,
-      diem: Math.round((d1 + d2 + d3) * 100) / 100, diem1: d1, diem2: Math.round(d2 * 100) / 100, diem3: d3,
-      diemToiDa: 10, giayDaLam: 3600 + k * 400,
-      chiTiet: { phan1, phan2, phan3 }
+      diem: kq.tong, diem1: kq.diem1, diem2: kq.diem2, diem3: kq.diem3,
+      diemToiDa: diemToiDa(de), giayDaLam: 3600 + k * 400,
+      chiTiet: kq.chiTiet, baiLam
     };
   });
 }
