@@ -950,7 +950,7 @@ $("sd-noi-dung").addEventListener("input", (e) => {
   capNhatDemSua();
 });
 
-function dongSuaDe() {
+function dongManSuaDe() {
   if (cacChoDaSua().length && !confirm("Bỏ các chỗ đã sửa mà chưa lưu?")) return;
   deDangSua = null;
   if (manQuayLai === "man-xem-bai") {
@@ -960,8 +960,8 @@ function dongSuaDe() {
     window.scrollTo(0, cuonQuayLai);
   }
 }
-$("nut-dong-sua").addEventListener("click", dongSuaDe);
-$("nut-huy-sua-de").addEventListener("click", dongSuaDe);
+$("nut-dong-sua").addEventListener("click", dongManSuaDe);
+$("nut-huy-sua-de").addEventListener("click", dongManSuaDe);
 $("nut-sua-dap-an").addEventListener("click", () => {
   const r = dsDangHien[viTriDangXem];
   if (r) moSuaDe(r.maDe, "man-xem-bai");
