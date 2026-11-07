@@ -87,7 +87,14 @@ Bấm vào một dòng (hoặc nút **Xem bài**) trong bảng điểm để xem
 - Từng câu kèm ảnh/đề bài: ô đỏ là phương án học sinh chọn sai, ô xanh là đáp án. Phần II, III ghi rõ học sinh trả lời gì và đáp án là gì. Nút **Chỉ câu sai** ẩn các câu làm đúng.
 - Nút **Bài trước / Bài sau** đi lần lượt theo đúng thứ tự và bộ lọc đang chọn trong bảng (vd lọc một đề, sắp theo tên để xem hết cả lớp). Nút Back của trình duyệt/điện thoại quay về bảng điểm.
 
-Bài làm được **chấm lại theo đáp án hiện tại trong `de.js`**. Nếu bạn sửa đáp án sau khi học sinh đã nộp, trang ghi chú điểm lúc nộp bên cạnh để bạn biết.
+**Chấm lại tự động:** trang admin luôn chấm lại mọi lượt nộp theo **đáp án hiện tại** (từ bài làm lưu trong Sheet), nên lỡ nhập sai đáp án thì sửa lại là mọi điểm đúng ngay. Lượt nào điểm khác lúc nộp có dấu **↻** (rê chuột để xem điểm lúc nộp), màn xem bài cũng ghi rõ điểm lúc nộp.
+
+### Sửa tên, đáp án đề (ngay trên trang admin)
+
+Trong **Kho đề** bấm **Sửa** cạnh đề (hoặc ở màn xem bài, bấm **Sửa đáp án đề này**). Trang hiện ảnh từng câu kèm ô đáp án: chọn lại A/B/C/D, Đ/S, gõ số Phần III (dấu phẩy được), sửa tên đề, mô tả, thời gian. Câu nào đã đổi có viền cam và nhãn "Đã sửa: B → A". Xong bấm **Lưu vào thư mục project**, chọn thư mục `web-luyen-de`: file `de.js` của đề được ghi lại và mọi lượt nộp của đề đó được chấm lại ngay. Rồi commit và push để học sinh làm bài với đáp án mới.
+
+- Không đổi được `id` của đề (link và bảng điểm nhận đề theo id).
+- Trang kiểm tra trước khi ghi: file trên máy phải đúng là đề đó; nếu file trên máy khác bản trang đang dùng (vd đã sửa tay mà chưa push) thì hỏi lại trước khi ghi đè.
 
 > Bản Code.gs cũ không gửi bài làm về trang thống kê. Nếu bấm Xem bài mà báo "Máy chủ chưa gửi bài làm về", hãy mở Apps Script, trong hàm `doGet` thêm dấu phẩy vào cuối dòng `chiTiet: docJson(r[12])` rồi thêm ngay bên dưới dòng `baiLam: docJson(r[13])`, sau đó triển khai phiên bản mới như trên. Đừng dán đè cả file `Code.gs` trong máy lên, vì file đó để mật khẩu mẫu `doi-mat-khau-nay` (nếu lỡ dán thì sửa lại `MAT_KHAU`). Các bài nộp từ trước vẫn xem được, vì bài làm vẫn luôn được lưu ở cột **Bài làm** trong Sheet.
 
@@ -148,7 +155,7 @@ Mỗi câu là một ảnh cắt từ PDF, học sinh xem ảnh rồi chọn đ�
 
 > Safari/Firefox không cho trang web ghi thẳng vào thư mục, nên sẽ tải về một file `.zip`: giải nén, chép thư mục đề vào `de-thi/<môn>/` và tự thêm dòng vào `danh-sach.js` như hướng dẫn hiện trên trang.
 
-Muốn sửa đáp án sau khi lưu: mở `de.js` của đề đó, đổi giá trị `dapAn`. Trang tạo đề chạy hoàn toàn trên máy, file PDF không bị gửi lên mạng.
+Muốn sửa tên, đáp án sau khi lưu: vào trang admin, **Kho đề → Sửa** (xem mục "Sửa tên, đáp án đề"), hoặc mở `de.js` của đề đó, đổi giá trị `dapAn`. Trang tạo đề chạy hoàn toàn trên máy, file PDF không bị gửi lên mạng.
 
 ### Cách 2: Gõ tay
 

@@ -322,13 +322,13 @@ th:not([data-sap]) { cursor: default; }
   .dong-sua { grid-template-columns: auto auto minmax(0, 1fr); }
   .dong-sua .ten-de { grid-column: 1 / -1; }
 }
-.dong-link { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.dong-link { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
 .dong-link .ten-de { font-weight: 600; font-size: 14px; }
 .dong-link-thu-muc { padding: 8px 10px; margin: 0 -10px; border-radius: 8px; background: var(--accent-soft); }
 .dong-link-thu-muc .ten-de { color: var(--accent); }
 .dong-link input { min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font: 13px var(--font-mono); }
 @media (max-width: 600px) {
-  .dong-link { grid-template-columns: minmax(0, 1fr) auto; }
+  .dong-link { grid-template-columns: minmax(0, 1fr) auto auto; }
   .dong-link .ten-de { grid-column: 1 / -1; }
 }
 
@@ -395,3 +395,19 @@ th:not([data-sap]) { cursor: default; }
   .bo-cuc-cat { grid-template-columns: minmax(0, 1fr); }
   .bang-cau { position: static; max-height: none; }
 }
+
+/* ---------- Chấm lại, sửa đề trên trang admin ---------- */
+.ghi-chu-cham-lai { margin: -8px 0 16px; font-size: 14px; color: var(--warn); }
+.dau-cham-lai { margin-left: 4px; color: var(--warn); font-weight: 700; cursor: help; }
+.diem-luot.cham-lai::after { content: "↻"; margin-left: 2px; color: var(--warn); }
+.cau.da-sua { border-left: 4px solid var(--warn); }
+.nhan-sua:empty { display: none; }
+.thanh-luu-de {
+  position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  margin-top: 24px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -4px 16px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.thanh-luu-de .trang-thai-luu { flex-basis: 100%; margin: 0; font-size: 14px; }
+.thanh-luu-de .trang-thai-luu:empty { display: none; }
+#sd-noi-dung .luoi-thong-tin { margin-bottom: 4px; }

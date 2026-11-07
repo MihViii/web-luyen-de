@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=20261107g">
+  <link rel="stylesheet" href="css/style.css?v=20261108a">
 
   <!-- MathJax: hiển thị công thức LaTeX khi xem lại đề gõ tay -->
   <script>
@@ -70,6 +70,7 @@
         </div>
 
         <div class="the-so" id="the-so"></div>
+        <p class="ghi-chu-cham-lai" id="tt-cham-lai" hidden></p>
 
         <section class="tong-hop" id="tong-hop" hidden></section>
 
@@ -98,7 +99,10 @@
     <!-- ===== MÀN 2: BÀI LÀM CỦA MỘT HỌC SINH ===== -->
     <section id="man-xem-bai" hidden>
       <div class="thanh-xem-bai">
-        <button type="button" class="nut" id="nut-dong-bai">← Bảng điểm</button>
+        <div class="hang-nut">
+          <button type="button" class="nut" id="nut-dong-bai">← Bảng điểm</button>
+          <button type="button" class="nut" id="nut-sua-dap-an">Sửa đáp án đề này</button>
+        </div>
         <div class="hang-nut">
           <span class="dem-cau" id="xb-vi-tri"></span>
           <button type="button" class="nut" id="nut-bai-truoc">‹ Bài trước</button>
@@ -113,15 +117,39 @@
       </header>
       <div id="xb-noi-dung"></div>
     </section>
+
+    <!-- ===== MÀN 3: SỬA TÊN, ĐÁP ÁN MỘT ĐỀ ===== -->
+    <section id="man-sua-de" hidden>
+      <div class="thanh-xem-bai">
+        <button type="button" class="nut" id="nut-dong-sua">← Quay lại</button>
+      </div>
+      <header class="dau-trang">
+        <div>
+          <span class="nhan" id="sd-nhan"></span>
+          <h1 id="sd-tieu-de"></h1>
+        </div>
+      </header>
+      <p class="goi-y-kho">Sửa tên, đáp án rồi bấm <b>Lưu vào thư mục project</b> và chọn thư mục <b>web-luyen-de</b>.
+        Mọi lượt nộp của đề này được chấm lại ngay theo đáp án mới. Sau đó commit và push lên GitHub để học sinh làm bài với đáp án mới.</p>
+      <div class="to-de" id="sd-noi-dung"></div>
+      <div class="thanh-luu-de">
+        <span class="dem-cau" id="sd-dem-sua"></span>
+        <div class="hang-nut">
+          <button type="button" class="nut nut-chinh" id="nut-luu-de">Lưu vào thư mục project</button>
+          <button type="button" class="nut" id="nut-huy-sua-de">Hủy</button>
+        </div>
+        <p class="trang-thai-luu" id="sd-tt"></p>
+      </div>
+    </section>
   </div>
 
   <!-- ?v=...: số phiên bản. Sửa file trong css/ hoặc js/ thì tăng số này ở cả 3 trang (index, admin, tao-de),
        để trình duyệt tải bản mới thay vì dùng bản cũ đã lưu (GitHub Pages cho giữ tới 10 phút). -->
-  <script src="js/config.js?v=20261107g"></script>
-  <script src="js/tai-de.js?v=20261107g"></script>
-  <script src="js/cham-diem.js?v=20261107g"></script>
-  <script src="js/xem-lai.js?v=20261107g"></script>
-  <script src="js/kho-de.js?v=20261107g"></script>
-  <script src="js/admin.js?v=20261107g"></script>
+  <script src="js/config.js?v=20261108a"></script>
+  <script src="js/tai-de.js?v=20261108a"></script>
+  <script src="js/cham-diem.js?v=20261108a"></script>
+  <script src="js/xem-lai.js?v=20261108a"></script>
+  <script src="js/kho-de.js?v=20261108a"></script>
+  <script src="js/admin.js?v=20261108a"></script>
 </body>
 </html>

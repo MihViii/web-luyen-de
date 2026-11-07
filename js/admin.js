@@ -35,6 +35,7 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
     tt.textContent = "Chưa có link Apps Script trong js/config.js. Đang hiện dữ liệu mẫu.";
     await DE_DA_TAI; // dữ liệu mẫu dựa trên đề đầu tiên
     tatCaKetQua = taoDuLieuMau();
+    chamLaiTatCa();
     batDauHienThi();
     return;
   }
@@ -46,6 +47,7 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
     if (!duLieu.ok) throw new Error(duLieu.loi);
     await DE_DA_TAI; // cần đề (đáp án, ảnh) để xem lại bài làm
     tatCaKetQua = duLieu.ketQua;
+    chamLaiTatCa();
     tt.textContent = `Đã tải ${tatCaKetQua.length} lượt làm bài`;
     // Code.gs cũ chưa trả về bài làm: nhắc cập nhật
     if (tatCaKetQua.length && !("baiLam" in tatCaKetQua[0])) {
@@ -57,6 +59,26 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
     tt.textContent = "Không tải được: " + loi.message;
   }
 });
+
+/* ---------- Chấm lại theo đáp án hiện tại ---------- */
+// Điểm trong Google Sheet là điểm lúc nộp. Lỡ nhập sai đáp án rồi sửa lại thì điểm đó sai, nên trang này
+// luôn chấm lại mọi lượt nộp từ bài làm (cột "Bài làm" trong Sheet) theo đáp án hiện tại trong de.js.
+// Điểm lúc nộp giữ ở r.diemLucNop; lượt nào điểm đổi thì có dấu ↻. Tên đề cũng lấy theo tên hiện tại.
+function chamLaiTatCa() {
+  const theoId = new Map(DANH_SACH_DE.map((d) => [d.id, d]));
+  tatCaKetQua.forEach((r) => {
+    if (r.diemLucNop === undefined) r.diemLucNop = Number(r.diem);
+    const de = theoId.get(r.maDe);
+    if (!de) return;                 // đề đã xóa/ẩn: giữ điểm lúc nộp
+    r.tenDe = de.ten;
+    if (!r.baiLam) return;           // không có bài làm (Code.gs cũ): giữ điểm lúc nộp
+    const kq = chamBai(de, chuanHoaBaiLam(de, r.baiLam));
+    Object.assign(r, { diem: kq.tong, diem1: kq.diem1, diem2: kq.diem2, diem3: kq.diem3, diemToiDa: diemToiDa(de), chiTiet: kq.chiTiet });
+  });
+}
+const daChamLai = (r) => Number.isFinite(r.diemLucNop) && Math.abs(Number(r.diem) - r.diemLucNop) > 1e-9;
+const dauChamLai = (r) => daChamLai(r)
+  ? `<span class="dau-cham-lai" title="Lúc nộp được ${vietDiem(r.diemLucNop)} điểm, đã chấm lại theo đáp án hiện tại">↻</span>` : "";
 
 /* ---------- Lọc kết quả theo thư mục trong Kho đề ---------- */
 
@@ -119,6 +141,9 @@ function locDuLieu() {
 function veLai() {
   const ds = locDuLieu();
   veTheSo(ds);
+  const soDoi = ds.filter(daChamLai).length;
+  $("tt-cham-lai").hidden = !soDoi;
+  $("tt-cham-lai").textContent = `↻ ${soDoi} lượt làm đã được chấm lại vì đáp án đề đã sửa sau khi học sinh nộp (rê chuột vào dấu ↻ để xem điểm lúc nộp).`;
   veBang(ds);
   veTongHop(ds); // dùng dsDangHien do veBang tạo, để bấm điểm mở đúng bài
 }
@@ -184,8 +209,8 @@ function veTongHop(ds) {
     return thang10 >= 8 ? "cao" : thang10 < 5 ? "thap" : "";
   };
   const oDiem = (luot) => luot
-    ? luot.map((r) => `<button type="button" class="diem-luot ${mauDiem(r)}" data-mo="${dsDangHien.indexOf(r)}"
-        title="Nộp lúc ${anToan(ngayGio(r.nopLuc))}, bấm để xem bài">${vietDiem(r.diem)}</button>`).join(`<span class="mui-ten">→</span>`)
+    ? luot.map((r) => `<button type="button" class="diem-luot ${mauDiem(r)} ${daChamLai(r) ? "cham-lai" : ""}" data-mo="${dsDangHien.indexOf(r)}"
+        title="Nộp lúc ${anToan(ngayGio(r.nopLuc))}${daChamLai(r) ? `. Lúc nộp được ${vietDiem(r.diemLucNop)} điểm, đã chấm lại theo đáp án hiện tại` : ""}. Bấm để xem bài">${vietDiem(r.diem)}</button>`).join(`<span class="mui-ten">→</span>`)
     : `<span class="chua-lam">–</span>`;
 
   hop.innerHTML = `
@@ -232,7 +257,7 @@ function veBang(ds) {
       <td>${anToan(r.hoTen)}</td>
       <td>${anToan(r.lop)}</td>
       <td>${anToan(r.tenDe)}</td>
-      <td class="so"><b>${vietDiem(r.diem)}</b></td>
+      <td class="so"><b>${vietDiem(r.diem)}</b>${dauChamLai(r)}</td>
       <td class="so">${vietDiem(r.diem1)}</td>
       <td class="so">${vietDiem(r.diem2)}</td>
       <td class="so">${vietDiem(r.diem3)}</td>
@@ -251,8 +276,7 @@ $("bang").addEventListener("click", (e) => {
 /* ---------- Xem bài làm của một học sinh ---------- */
 
 function hienMan(id) {
-  $("man-bang-diem").hidden = id !== "man-bang-diem";
-  $("man-xem-bai").hidden = id !== "man-xem-bai";
+  ["man-bang-diem", "man-xem-bai", "man-sua-de"].forEach((m) => { $(m).hidden = m !== id; });
 }
 
 function moBai(viTri) {
@@ -265,6 +289,7 @@ function moBai(viTri) {
   $("xb-vi-tri").textContent = `Bài ${viTri + 1}/${dsDangHien.length}`;
   $("nut-bai-truoc").disabled = viTri === 0;
   $("nut-bai-sau").disabled = viTri === dsDangHien.length - 1;
+  $("nut-sua-dap-an").hidden = !DANH_SACH_DE.some((d) => d.id === r.maDe);
 
   const khung = $("xb-noi-dung");
   khung.innerHTML = veBaiLam(r);
@@ -342,13 +367,13 @@ function veBaiLam(r) {
 
   const bl = chuanHoaBaiLam(de, r.baiLam);
   const kq = chamBai(de, bl); // chấm lại theo đáp án hiện tại trong de.js
-  const lechDiem = Math.abs(kq.tong - Number(r.diem)) > 1e-9;
+  const lechDiem = Number.isFinite(r.diemLucNop) && Math.abs(kq.tong - r.diemLucNop) > 1e-9;
 
   const thongTin = `
     <span>Nộp lúc ${anToan(ngayGio(r.nopLuc))}</span>
     <span>Thời gian làm ${phutGiay(r.giayDaLam)}</span>
-    ${lechDiem ? `<span class="mau-sai">Điểm trên chấm lại theo đáp án hiện tại trong de.js. Lúc nộp,
-      học sinh được ${vietDiem(r.diem)} điểm (có thể đáp án đã được sửa sau đó).</span>` : ""}`;
+    ${lechDiem ? `<span class="mau-sai">↻ Đã chấm lại theo đáp án hiện tại. Lúc nộp, học sinh được
+      ${vietDiem(r.diemLucNop)} điểm (đáp án đề đã được sửa sau đó).</span>` : ""}`;
 
   return `
     ${veBangDiem(de, kq, thongTin)}
@@ -466,13 +491,14 @@ function cacThuMucKemDuongDan(cay) {
   return ds;
 }
 
-const dongLink = (nhan, link, moTa, lop = "") => `
+const dongLink = (nhan, link, moTa, lop = "", them = "") => `
   <div class="dong-link ${lop}">
     <span class="ten-de">${nhan}</span>
     <input readonly value="${anToan(link)}" aria-label="${moTa}">
-    <button type="button" class="nut nut-nho" data-chep>Sao chép</button>
+    <button type="button" class="nut nut-nho" data-chep>Sao chép</button>${them}
   </div>`;
-const dongLinkDe = (de) => dongLink(anToan(de.ten), linkDe(de.id), `Link đề ${anToan(de.ten)}`);
+const dongLinkDe = (de) => dongLink(anToan(de.ten), linkDe(de.id), `Link đề ${anToan(de.ten)}`, "",
+  `<button type="button" class="nut nut-nho" data-sua-de="${anToan(de.id)}" aria-label="Sửa tên, đáp án đề ${anToan(de.ten)}">Sửa</button>`);
 
 // Chế độ xem. tim: chữ đang tìm (đã bỏ dấu). Thư mục khớp tên thì hiện cả cây con của nó,
 // không khớp thì chỉ hiện những nhánh có đề khớp. Không còn gì để hiện thì trả về "".
@@ -587,6 +613,8 @@ $("ds-thu-muc").addEventListener("focusin", (e) => { if (e.target.matches("input
 $("ds-thu-muc").addEventListener("click", async (e) => {
   const nutSua = e.target.closest("button[data-lam]");
   if (nutSua) { suaKho(nutSua.dataset.lam, +nutSua.dataset.k, +nutSua.dataset.i); return; }
+  const nutSuaDe = e.target.closest("button[data-sua-de]");
+  if (nutSuaDe) { moSuaDe(nutSuaDe.dataset.suaDe, "man-bang-diem"); return; }
 
   const nut = e.target.closest("button[data-chep]");
   if (!nut) return;
@@ -736,6 +764,291 @@ $("nut-luu-kho").addEventListener("click", async () => {
   } catch (loiGhi) {
     tt.textContent = "Chưa lưu được: " + loiGhi.message;
   }
+});
+
+/* ---------- Sửa tên, đáp án đề ngay trên trang admin ---------- */
+// Mở từ nút "Sửa" trong Kho đề hoặc "Sửa đáp án đề này" ở màn xem bài. Lưu thì ghi đè file
+// de-thi/<thư mục đề>/de.js trên máy (File System Access API, như trang tạo đề), rồi chấm lại ngay
+// mọi lượt nộp của đề đó. Push lên GitHub thì học sinh làm bài với đáp án mới.
+
+let deDangSua = null;     // đề đang sửa (đối tượng trong DANH_SACH_DE)
+let banSua = null;        // { ten, moTa, thoiGian, p1: ["A"..], p2: [[true/false/null]], p3: ["2,71"] }
+let manQuayLai = "man-bang-diem";
+let cuonQuayLai = 0;
+
+const TEN_FILE_DE = "de.js";
+
+// Đường dẫn thư mục đề tính từ de-thi/, vd "toan/de-18" (de.thuMuc do tai-de.js ghi lúc nạp đề)
+function thuMucCuaDe(de) {
+  const goc = new URL("de-thi/", location.href).href;
+  return de.thuMuc.startsWith(goc) ? decodeURIComponent(de.thuMuc.slice(goc.length)).replace(/\/$/, "") : "";
+}
+
+// Đọc nội dung một file de.js thành đối tượng đề (chạy file với hàm themDe giả)
+function docFileDe(vanBan) {
+  let de = null;
+  new Function("themDe", vanBan)((x) => { de = x; });
+  return de;
+}
+
+// Viết lại file de.js từ đối tượng đề. Giữ mọi trường (nội dung, lựa chọn, lời giải, hình...),
+// mỗi câu một dòng cho dễ đọc. Bỏ thuMuc (trang tự thêm lúc nạp, không thuộc file).
+function vietFileDe(de) {
+  const { thuMuc, ...sach } = de;
+  const giaTri = (v) => {
+    if (Array.isArray(v)) return `[${v.map(giaTri).join(", ")}]`;
+    if (v && typeof v === "object") {
+      return `{ ${Object.entries(v).map(([k, x]) => `${/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k)}: ${giaTri(x)}`).join(", ")} }`;
+    }
+    return JSON.stringify(v);
+  };
+  const dong = Object.entries(sach).map(([k, v]) => (["phan1", "phan2", "phan3"].includes(k) && Array.isArray(v)
+    ? `  ${k}: ${v.length ? `[\n${v.map((c) => "    " + giaTri(c)).join(",\n")}\n  ]` : "[]"}`
+    : `  ${k}: ${giaTri(v)}`));
+  return `/* ${String(de.ten).replace(/\*\//g, "")} · ${de.mon}
+   Sửa lần cuối bằng trang admin ngày ${new Date().toLocaleDateString("vi-VN")}.
+   Muốn sửa tên, đáp án: trang admin -> Kho đề -> nút "Sửa" cạnh đề (hoặc sửa tay bên dưới).
+   ĐỪNG đổi "id" của đề đã có học sinh làm, vì link và bảng điểm nhận đề theo id. */
+
+themDe({
+${dong.join(",\n")}
+});
+`;
+}
+
+const giongDapAn3 = (chuoi, dapAn) => { const so = chuyenThanhSo(chuoi); return so !== null && bangNhau(so, dapAn); };
+
+// Những chỗ đã sửa so với đề hiện tại (để đếm, đánh dấu và biết có cần lưu không)
+function cacChoDaSua() {
+  const de = deDangSua, b = banSua, ds = [];
+  if (b.ten.trim() !== de.ten) ds.push("tên đề");
+  if (b.moTa.trim() !== (de.moTa || "")) ds.push("mô tả");
+  if (Number(b.thoiGian) !== de.thoiGian) ds.push("thời gian");
+  de.phan1.forEach((cau, i) => { if (b.p1[i] !== cau.dapAn) ds.push(`I.${i + 1}`); });
+  de.phan2.forEach((cau, i) => { if (cau.y.some((y, j) => b.p2[i][j] !== y.dapAn)) ds.push(`II.${i + 1}`); });
+  de.phan3.forEach((cau, i) => { if (!giongDapAn3(b.p3[i], cau.dapAn)) ds.push(`III.${i + 1}`); });
+  return ds;
+}
+
+function moSuaDe(id, tuMan) {
+  const de = DANH_SACH_DE.find((d) => d.id === id);
+  if (!de) return;
+  deDangSua = de;
+  manQuayLai = tuMan;
+  cuonQuayLai = window.scrollY;
+  banSua = {
+    ten: de.ten, moTa: de.moTa || "", thoiGian: de.thoiGian,
+    p1: de.phan1.map((c) => c.dapAn),
+    p2: de.phan2.map((c) => c.y.map((y) => y.dapAn)),
+    p3: de.phan3.map((c) => vietSo(c.dapAn))
+  };
+  $("sd-nhan").textContent = `Sửa đề · de-thi/${thuMucCuaDe(de)}/${TEN_FILE_DE}`;
+  $("sd-tieu-de").textContent = de.ten;
+  $("sd-tt").textContent = "";
+  $("sd-tt").className = "trang-thai-luu";
+  veSuaDe();
+  hienMan("man-sua-de");
+  window.scrollTo(0, 0);
+}
+
+function veSuaDe() {
+  const de = deDangSua, b = banSua;
+  const cauHoi = (cau) => `<div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>`;
+  const dauCau = (ten) => `<div class="dau-cau"><b>${ten}</b><span class="nhan-sua"></span></div>`;
+  const tieuDePhan = (ten, moTa) => `<div class="tieu-de-phan"><h2>${ten}</h2><p>${moTa}</p></div>`;
+
+  $("sd-noi-dung").innerHTML = `
+    <div class="luoi-thong-tin">
+      <label>Tên đề <input id="sd-ten" value="${anToan(b.ten)}"></label>
+      <label>Mô tả (không bắt buộc) <input id="sd-mo-ta" value="${anToan(b.moTa)}"></label>
+      <label>Thời gian (phút) <input id="sd-thoi-gian" type="number" min="1" value="${anToan(b.thoiGian)}"></label>
+    </div>
+    ${de.phan1.length ? tieuDePhan("Phần I", "Chọn đáp án đúng của mỗi câu.") : ""}
+    ${de.phan1.map((cau, i) => `
+      <article class="cau" data-cau="p1-${i}">
+        ${dauCau(`Câu ${i + 1}`)}${cauHoi(cau)}
+        <div class="lua-chon${cau.luaChon ? "" : " chi-chu"}">
+          ${phuongAn(cau).map((lc, j) => `
+            <label><input type="radio" name="sd-p1-${i}" value="${CHU_CAI[j]}" ${b.p1[i] === CHU_CAI[j] ? "checked" : ""}>
+              <span class="bong">${CHU_CAI[j]}</span>${lc ? `<span>${lc}</span>` : ""}</label>`).join("")}
+        </div>
+      </article>`).join("")}
+    ${de.phan2.length ? tieuDePhan("Phần II", "Mỗi ý chọn Đúng hoặc Sai.") : ""}
+    ${de.phan2.map((cau, i) => `
+      <article class="cau" data-cau="p2-${i}">
+        ${dauCau(`Câu ${i + 1}`)}${cauHoi(cau)}
+        <div class="y-dung-sai">
+          ${cau.y.map((y, j) => `
+            <div class="dong-y">
+              <span class="chu-y">${"abcd"[j]})</span>
+              <span class="noi-dung-y">${y.noiDung || ""}</span>
+              <span class="chon-ds">
+                <label><input type="radio" name="sd-p2-${i}-${j}" value="dung" ${b.p2[i][j] === true ? "checked" : ""}><span>Đ</span></label>
+                <label><input type="radio" name="sd-p2-${i}-${j}" value="sai" ${b.p2[i][j] === false ? "checked" : ""}><span>S</span></label>
+              </span>
+            </div>`).join("")}
+        </div>
+      </article>`).join("")}
+    ${de.phan3.length ? tieuDePhan("Phần III", "Đáp án là một số, dùng dấu phẩy cho số thập phân.") : ""}
+    ${de.phan3.map((cau, i) => `
+      <article class="cau" data-cau="p3-${i}">
+        ${dauCau(`Câu ${i + 1}`)}${cauHoi(cau)}
+        <div class="hang-dap-an">
+          <span class="nhan">Đáp án</span>
+          <input class="o-dap-an" data-p3="${i}" value="${anToan(b.p3[i])}" maxlength="8" autocomplete="off"
+                 aria-label="Đáp án câu ${i + 1} phần III">
+        </div>
+      </article>`).join("")}`;
+  document.querySelectorAll("#sd-noi-dung article[data-cau]").forEach(danhDauCau);
+  capNhatDemSua();
+  veCongThuc($("sd-noi-dung"));
+}
+
+// Đánh dấu câu đã đổi đáp án: viền màu + "Đã sửa: B → A"
+function danhDauCau(the) {
+  const de = deDangSua, b = banSua;
+  const [phan, i] = the.dataset.cau.split("-");
+  const chuDS = (v) => (v === true ? "Đ" : v === false ? "S" : "?");
+  let nhan = "";
+  if (phan === "p1" && b.p1[i] !== de.phan1[i].dapAn) nhan = `Đã sửa: ${de.phan1[i].dapAn} → ${b.p1[i]}`;
+  if (phan === "p2" && de.phan2[i].y.some((y, j) => b.p2[i][j] !== y.dapAn)) {
+    nhan = `Đã sửa: ${de.phan2[i].y.map((y) => chuDS(y.dapAn)).join("")} → ${b.p2[i].map(chuDS).join("")}`;
+  }
+  if (phan === "p3" && !giongDapAn3(b.p3[i], de.phan3[i].dapAn)) {
+    nhan = `Đã sửa: ${vietSo(de.phan3[i].dapAn)} → ${anToan(b.p3[i]) || "(trống)"}`;
+  }
+  the.classList.toggle("da-sua", !!nhan);
+  the.querySelector(".nhan-sua").innerHTML = nhan ? huyHieu("mot-phan", nhan) : "";
+}
+
+function capNhatDemSua() {
+  const ds = cacChoDaSua();
+  $("sd-dem-sua").textContent = ds.length ? `Đã sửa ${ds.length} chỗ: ${ds.join(", ")}` : "Chưa sửa gì";
+  $("nut-luu-de").disabled = !ds.length;
+}
+
+$("sd-noi-dung").addEventListener("change", (e) => {
+  const o = e.target;
+  if (o.type !== "radio" || !o.name.startsWith("sd-")) return;
+  const [, phan, i, j] = o.name.split("-");
+  if (phan === "p1") banSua.p1[+i] = o.value;
+  if (phan === "p2") banSua.p2[+i][+j] = o.value === "dung";
+  danhDauCau(o.closest("article"));
+  capNhatDemSua();
+});
+
+$("sd-noi-dung").addEventListener("input", (e) => {
+  const o = e.target;
+  if (o.id === "sd-ten") banSua.ten = o.value;
+  else if (o.id === "sd-mo-ta") banSua.moTa = o.value;
+  else if (o.id === "sd-thoi-gian") banSua.thoiGian = o.value;
+  else if (o.dataset.p3 !== undefined) {
+    o.value = o.value.replace(/[^0-9,.\-]/g, "").replace(".", ","); // giống ô trả lời của học sinh
+    banSua.p3[+o.dataset.p3] = o.value;
+    danhDauCau(o.closest("article"));
+  } else return;
+  capNhatDemSua();
+});
+
+function dongSuaDe() {
+  if (cacChoDaSua().length && !confirm("Bỏ các chỗ đã sửa mà chưa lưu?")) return;
+  deDangSua = null;
+  if (manQuayLai === "man-xem-bai") {
+    moBai(viTriDangXem); // vẽ lại bài đang xem (có thể đã chấm lại)
+  } else {
+    hienMan(manQuayLai);
+    window.scrollTo(0, cuonQuayLai);
+  }
+}
+$("nut-dong-sua").addEventListener("click", dongSuaDe);
+$("nut-huy-sua-de").addEventListener("click", dongSuaDe);
+$("nut-sua-dap-an").addEventListener("click", () => {
+  const r = dsDangHien[viTriDangXem];
+  if (r) moSuaDe(r.maDe, "man-xem-bai");
+});
+
+$("nut-luu-de").addEventListener("click", async () => {
+  const de = deDangSua, b = banSua, tt = $("sd-tt");
+  tt.className = "trang-thai-luu loi";
+  // Kiểm tra trước khi lưu
+  const loi = [];
+  if (!b.ten.trim()) loi.push("Chưa nhập tên đề.");
+  if (!(Number(b.thoiGian) > 0)) loi.push("Thời gian phải lớn hơn 0.");
+  b.p2.forEach((y, i) => { if (y.includes(null)) loi.push(`Phần II câu ${i + 1}: chưa chọn đủ Đ/S cho 4 ý.`); });
+  b.p3.forEach((x, i) => { if (chuyenThanhSo(x) === null) loi.push(`Phần III câu ${i + 1}: đáp án phải là một số.`); });
+  if (loi.length) { tt.innerHTML = "Chưa lưu được:<br>" + loi.map(anToan).join("<br>"); return; }
+
+  // Đề sau khi sửa (giữ nguyên mọi trường khác)
+  const { thuMuc, ...goc } = de;
+  const moi = structuredClone(goc);
+  Object.assign(moi, { ten: b.ten.trim(), moTa: b.moTa.trim(), thoiGian: Number(b.thoiGian) });
+  moi.phan1.forEach((c, i) => { c.dapAn = b.p1[i]; });
+  moi.phan2.forEach((c, i) => c.y.forEach((y, j) => { y.dapAn = b.p2[i][j]; }));
+  moi.phan3.forEach((c, i) => { c.dapAn = chuyenThanhSo(b.p3[i]); });
+  const noiDung = vietFileDe(moi);
+  const duongDan = `de-thi/${thuMucCuaDe(de)}/${TEN_FILE_DE}`;
+
+  if (!window.showDirectoryPicker) {
+    // Safari/Firefox không ghi thẳng vào thư mục được: tải file về để tự chép đè
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([noiDung], { type: "text/javascript" }));
+    a.download = TEN_FILE_DE;
+    a.click();
+  } else {
+    let thuGoc;
+    try {
+      thuGoc = await showDirectoryPicker({ id: "web-luyen-de", mode: "readwrite" });
+    } catch (loiMo) {
+      if (loiMo.name !== "AbortError") tt.textContent = "Không mở được thư mục: " + loiMo.message;
+      return;
+    }
+    try {
+      let thu = await thuGoc.getDirectoryHandle("de-thi").catch(() => null);
+      for (const phan of thuMucCuaDe(de).split("/")) thu = thu && await thu.getDirectoryHandle(phan).catch(() => null);
+      const tep = thu && await thu.getFileHandle(TEN_FILE_DE).catch(() => null);
+      if (!tep) throw new Error(`Không thấy ${duongDan} trong thư mục "${thuGoc.name}". Hãy chọn đúng thư mục web-luyen-de.`);
+      // Chống ghi nhầm: file trên máy phải là đúng đề này; khác bản trang đang dùng thì hỏi lại
+      let trenMay;
+      try { trenMay = docFileDe(await (await tep.getFile()).text()); } catch (e) { trenMay = null; }
+      if (trenMay && trenMay.id !== de.id) throw new Error(`File ${duongDan} trên máy là đề khác (id "${trenMay.id}"), không ghi đè.`);
+      if (trenMay && JSON.stringify(trenMay) !== JSON.stringify(goc) &&
+          !confirm(`File ${duongDan} trên máy khác với bản trang đang dùng (có thể bạn đã sửa trên máy mà chưa push). Vẫn ghi đè bằng bản vừa sửa?`)) {
+        tt.textContent = "Chưa lưu.";
+        return;
+      }
+      const ghi = await tep.createWritable();
+      await ghi.write(noiDung);
+      await ghi.close();
+    } catch (loiGhi) {
+      tt.textContent = "Chưa lưu được: " + loiGhi.message;
+      return;
+    }
+  }
+
+  // Áp dụng ngay vào trang: đổi tên, đáp án, rồi chấm lại các lượt nộp của đề này
+  const luotCuaDe = tatCaKetQua.filter((r) => r.maDe === de.id);
+  const diemTruoc = new Map(luotCuaDe.map((r) => [r, Number(r.diem)]));
+  Object.assign(de, { ten: moi.ten, moTa: moi.moTa, thoiGian: moi.thoiGian });
+  de.phan1.forEach((c, i) => { c.dapAn = moi.phan1[i].dapAn; });
+  de.phan2.forEach((c, i) => c.y.forEach((y, j) => { y.dapAn = moi.phan2[i].y[j].dapAn; }));
+  de.phan3.forEach((c, i) => { c.dapAn = moi.phan3[i].dapAn; });
+  chamLaiTatCa();
+  const soDoiDiem = luotCuaDe.filter((r) => Math.abs(Number(r.diem) - diemTruoc.get(r)) > 1e-9).length;
+
+  khoXem = dungKho(layKhoDe());
+  if (!khoTam) veKho();
+  if (tatCaKetQua.length) batDauHienThi();
+  $("sd-tieu-de").textContent = de.ten;
+  veSuaDe();
+
+  tt.className = "trang-thai-luu ok";
+  tt.innerHTML = (window.showDirectoryPicker
+    ? `Đã lưu vào <code>${anToan(duongDan)}</code>.`
+    : `Trình duyệt này không ghi thẳng vào thư mục được, nên đã tải về file <code>${TEN_FILE_DE}</code>: chép đè vào <code>${anToan(duongDan)}</code>.`) +
+    (tatCaKetQua.length
+      ? ` Đã chấm lại ${luotCuaDe.length} lượt làm đề này${soDoiDiem ? `, ${soDoiDiem} lượt đổi điểm` : ", không lượt nào đổi điểm"}.`
+      : " Bấm Tải kết quả để xem điểm đã chấm lại.") +
+    " Nhớ commit và push lên GitHub để học sinh làm bài với đáp án mới.";
 });
 
 /* ---------- Dữ liệu mẫu khi chưa kết nối Google Sheet ---------- */
