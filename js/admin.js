@@ -189,10 +189,6 @@ function veTongHop(ds) {
     : `<span class="chua-lam">–</span>`;
 
   hop.innerHTML = `
-    <div class="dau-tong-hop">
-      <h2>Theo học sinh</h2>
-      <span class="dem-cau">Mỗi ô là điểm từng lần làm (cũ → mới). Bấm vào điểm để xem bài.</span>
-    </div>
     <div class="cuon-ngang">
       <table class="bang-tong-hop">
         <thead><tr>

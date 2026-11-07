@@ -267,8 +267,6 @@ td.so, th.so { text-align: right; font-family: var(--font-mono); font-variant-nu
 tr:last-child td { border-bottom: 0; }
 /* Bảng "Theo học sinh": mỗi học sinh một dòng, mỗi đề một cột */
 .tong-hop { display: grid; gap: 10px; }
-.dau-tong-hop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
-.dau-tong-hop h2 { font-size: 20px; }
 .bang-tong-hop th { white-space: normal; min-width: 90px; vertical-align: bottom; }
 .bang-tong-hop th:first-child, .bang-tong-hop td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
 .diem-luot {
