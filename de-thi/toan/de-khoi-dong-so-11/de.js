@@ -1,17 +1,17 @@
-/* Đề khởi động số 11 · Toán
-   Tạo bằng trang "Tạo đề từ PDF" ngày 25/10/2026.
-   Mỗi câu là một ảnh cắt từ de.pdf. Muốn sửa đáp án thì đổi dapAn bên dưới. */
+/* ĐỀ 11 · Toán
+   Sửa lần cuối bằng trang admin ngày 8/11/2026.
+   Muốn sửa tên, đáp án: trang admin -> Kho đề -> nút "Sửa" cạnh đề (hoặc sửa tay bên dưới).
+   ĐỪNG đổi "id" của đề đã có học sinh làm, vì link và bảng điểm nhận đề theo id. */
 
 themDe({
   id: "toan-de-khoi-dong-so-11",
   mon: "Toán",
-  ten: "Đề khởi động số 11",
+  ten: "ĐỀ 11",
   moTa: "",
-  thoiGian: 90, // phút
+  thoiGian: 90,
   diemPhan1: 0.25,
   diemPhan3: 0.5,
-  pdf: "de.pdf", // file học sinh bấm "Tải đề" nhận được
-
+  pdf: "de.pdf",
   phan1: [
     { hinh: "p1-01.png", dapAn: "C" },
     { hinh: "p1-02.png", dapAn: "B" },
@@ -26,14 +26,12 @@ themDe({
     { hinh: "p1-11.png", dapAn: "D" },
     { hinh: "p1-12.png", dapAn: "B" }
   ],
-
   phan2: [
     { hinh: "p2-01.png", y: [{ dapAn: true }, { dapAn: false }, { dapAn: false }, { dapAn: true }] },
     { hinh: "p2-02.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: true }] },
     { hinh: "p2-03.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: true }] },
     { hinh: "p2-04.png", y: [{ dapAn: false }, { dapAn: false }, { dapAn: false }, { dapAn: true }] }
   ],
-
   phan3: [
     { hinh: "p3-01.png", dapAn: 40 },
     { hinh: "p3-02.png", dapAn: 2.7 },
