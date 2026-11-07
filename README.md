@@ -118,7 +118,7 @@ Có hai cách: **tạo từ file PDF** (nhanh, không phải gõ đề) hoặc *
 
 ### Cách 1: Tạo đề từ PDF
 
-Mỗi câu là một ảnh cắt từ PDF, học sinh xem ảnh rồi chọn đáp án trên phiếu. File PDF được lưu kèm để học sinh bấm **Tải đề (PDF)** ở màn nhập tên.
+Mỗi câu là một ảnh cắt từ PDF, học sinh xem ảnh rồi chọn đáp án trên phiếu. File PDF được lưu kèm, học sinh bấm **Tải đề (PDF)** ở đầu bài làm để xem cho dễ. Nút này chỉ hiện sau khi bấm **Bắt đầu làm bài** (đồng hồ đã chạy), để học sinh không tải về làm trước rồi mới vào điền đáp án.
 
 1. Mở `admin.html` (trên máy hoặc trên GitHub Pages), bấm **Tạo đề từ PDF**. Nên dùng **Chrome hoặc Edge**.
 2. Nhập môn, tên đề, thời gian. Trang hiện sẵn thư mục sẽ lưu, vd `de-thi/toan/de-thi-thu-so-2/`.

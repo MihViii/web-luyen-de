@@ -98,14 +98,8 @@ function moManThongTin() {
   $("tt-ten-de").textContent = de.ten;
   $("tt-mo-ta").textContent =
     `${de.phan1.length} câu trắc nghiệm, ${de.phan2.length} câu đúng/sai, ` +
-    `${de.phan3.length} câu trả lời ngắn. Thời gian ${de.thoiGian} phút, hết giờ bài tự nộp.`;
-  // Đề có file PDF (trường "pdf" trong de.js) thì hiện nút tải về
-  const taiPdf = $("tt-tai-pdf");
-  taiPdf.hidden = !de.pdf;
-  if (de.pdf) {
-    taiPdf.href = new URL(de.pdf, de.thuMuc).href;
-    taiPdf.download = de.id + ".pdf";
-  }
+    `${de.phan3.length} câu trả lời ngắn. Thời gian ${de.thoiGian} phút, hết giờ bài tự nộp.` +
+    (de.pdf ? " Bấm Bắt đầu làm bài thì mới tải được file PDF của đề." : "");
   $("loi-thong-tin").hidden = true;
   hienMan("man-thong-tin");
   $("o-ho-ten").focus();
@@ -196,10 +190,15 @@ function veToDe() {
       </div>
     </article>`).join("");
 
+  // Nút tải PDF chỉ có ở màn làm bài (đồng hồ đã chạy), để học sinh không tải về làm trước rồi mới vào điền đáp án
+  const taiPdf = de.pdf
+    ? `<a class="nut nut-nho" href="${anToan(new URL(de.pdf, de.thuMuc).href)}" download="${anToan(de.id)}.pdf">Tải đề (PDF)</a>`
+    : "";
+
   $("to-de").innerHTML = `
     <div class="tieu-de-phan">
       <span class="nhan">${anToan(trangThai.hoTen)}${trangThai.lop ? " · Lớp " + anToan(trangThai.lop) : ""}</span>
-      <h2>${de.ten}</h2>
+      <div class="dau-cau"><h2>${de.ten}</h2>${taiPdf}</div>
     </div>
     ${phan1 && `<div class="tieu-de-phan"><h2>Phần I</h2><p>Trắc nghiệm nhiều lựa chọn. Mỗi câu chọn một phương án.</p></div>`}
     ${phan1}
