@@ -55,24 +55,44 @@ function xoaLuuTam() {
 
 /* ================= MÀN 1: CHỌN ĐỀ ================= */
 
-function veDanhSachDe() {
-  $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
-
-  // Gom đề theo môn: { "Toán": [de1, de2], "Vật lý": [...] }
-  const theoMon = {};
-  DANH_SACH_DE.forEach((de) => {
-    (theoMon[de.mon] = theoMon[de.mon] || []).push(de);
+// Gom đề thành nhóm theo Kho đề (de-thi/kho-de.js, gia sư sắp xếp ở trang admin), đúng thứ tự.
+// Đề chưa xếp vào thư mục nào: gom vào "Đề khác"; nếu chưa có thư mục nào thì gom theo môn như cũ.
+function nhomDe() {
+  const theoId = new Map(DANH_SACH_DE.map((d) => [d.id, d]));
+  const daXep = new Set();
+  const nhom = layKhoDe().map((t) => {
+    const cacDe = [];
+    t.de.forEach((id) => {
+      if (!theoId.has(id) || daXep.has(id)) return; // đề đã ẩn, hoặc nằm ở 2 thư mục
+      daXep.add(id);
+      cacDe.push(theoId.get(id));
+    });
+    return { ten: t.ten, ma: t.ma, cacDe };
   });
+  const conLai = DANH_SACH_DE.filter((d) => !daXep.has(d.id));
+  if (nhom.some((n) => n.cacDe.length)) {
+    if (conLai.length) nhom.push({ ten: "Đề khác", ma: null, cacDe: conLai });
+  } else {
+    const theoMon = {};
+    conLai.forEach((de) => { (theoMon[de.mon] = theoMon[de.mon] || []).push(de); });
+    Object.entries(theoMon).forEach(([mon, cacDe]) => nhom.push({ ten: mon, ma: null, cacDe }));
+  }
+  return nhom;
+}
 
-  $("danh-sach-mon").innerHTML = Object.entries(theoMon).map(([mon, cacDe]) => `
+// Vẽ các nhóm đề (mặc định: tất cả; mở bằng link thư mục thì chỉ một nhóm)
+function veDanhSachDe(nhom = nhomDe()) {
+  $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
+  $("danh-sach-mon").innerHTML = nhom.filter((n) => n.cacDe.length).map((n) => `
     <div class="nhom-mon">
-      <h2>${mon}</h2>
+      <h2>${anToan(n.ten)}</h2>
       <div class="danh-sach-de">
-        ${cacDe.map((de) => `
-          <button type="button" class="the-de" data-ma-de="${de.id}">
+        ${n.cacDe.map((de) => `
+          <button type="button" class="the-de" data-ma-de="${anToan(de.id)}">
             <h3>${de.ten}</h3>
             <p>${de.moTa || ""}</p>
             <div class="thong-so">
+              <span>${de.mon}</span>
               <span>${de.thoiGian} phút</span>
               <span>${de.phan1.length + de.phan2.length + de.phan3.length} câu</span>
               <span>Thang ${vietSo(diemToiDa(de))} điểm</span>
@@ -80,7 +100,7 @@ function veDanhSachDe() {
             </div>
           </button>`).join("")}
       </div>
-    </div>`).join("");
+    </div>`).join("") || `<p class="thong-bao-xem">Chưa có đề nào.</p>`;
 }
 
 $("danh-sach-mon").addEventListener("click", (e) => {
@@ -415,12 +435,13 @@ async function guiKetQuaLenMayChu() {
 /* ================= KHỞI ĐỘNG ================= */
 
 // Nếu học sinh lỡ tải lại trang khi đang làm bài -> mở lại đúng bài đó.
-// chiMaDe: đang mở bằng link riêng thì chỉ khôi phục bài dở của đúng đề đó. Trả về true nếu đã khôi phục.
-function khoiPhucBaiDangLam(chiMaDe) {
+// chiCacDe: đang mở bằng link riêng (của đề hoặc thư mục) thì chỉ khôi phục bài dở của các đề trong đó.
+// Trả về true nếu đã khôi phục.
+function khoiPhucBaiDangLam(chiCacDe) {
   let duLieu = null;
   try { duLieu = JSON.parse(localStorage.getItem(KHOA_LUU_TAM)); } catch (e) {}
   if (!duLieu) return false;
-  if (chiMaDe && duLieu.maDe !== chiMaDe) return false;
+  if (chiCacDe && !chiCacDe.includes(duLieu.maDe)) return false;
   const de = DANH_SACH_DE.find((d) => d.id === duLieu.maDe);
   if (!de) { xoaLuuTam(); return false; }
   trangThai.de = de;
@@ -430,7 +451,11 @@ function khoiPhucBaiDangLam(chiMaDe) {
 
 // Link riêng của một đề (index.html?de=<id đề>, tạo bằng linkDe trong tai-de.js):
 // mở thẳng đề đó và ẩn nút "Chọn đề khác", để học sinh không làm nhầm đề.
-const MA_DE_TU_LINK = new URLSearchParams(location.search).get("de");
+// Link thư mục (index.html?thu-muc=<mã thư mục>, tạo bằng linkThuMuc): chỉ hiện các đề trong thư mục đó,
+// học sinh làm xong đề này thì bấm "Chọn đề khác" để làm tiếp đề khác trong cùng thư mục.
+const THAM_SO_LINK = new URLSearchParams(location.search);
+const MA_DE_TU_LINK = THAM_SO_LINK.get("de");
+const MA_THU_MUC_TU_LINK = THAM_SO_LINK.get("thu-muc");
 
 function moDeTuLink() {
   $("nut-quay-lai").hidden = true;
@@ -441,9 +466,25 @@ function moDeTuLink() {
       Bạn hỏi lại thầy/cô link của đề nhé.</p>`;
     return;
   }
-  if (khoiPhucBaiDangLam(de.id)) return;
+  if (khoiPhucBaiDangLam([de.id])) return;
   trangThai.de = de;
   moManThongTin();
+}
+
+function moThuMucTuLink() {
+  const nhom = nhomDe().find((n) => n.ma === MA_THU_MUC_TU_LINK);
+  if (!nhom) {
+    $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
+    $("danh-sach-mon").innerHTML = `<p class="thong-bao-xem">Link này không đúng hoặc thư mục đã bị xóa.
+      Bạn hỏi lại thầy/cô link nhé.</p>`;
+    return;
+  }
+  veDanhSachDe([nhom]);
+  if (!nhom.cacDe.length) {
+    $("danh-sach-mon").innerHTML = `<h2>${anToan(nhom.ten)}</h2><p class="thong-bao-xem">Thư mục này chưa có đề nào.</p>`;
+    return;
+  }
+  khoiPhucBaiDangLam(nhom.cacDe.map((d) => d.id));
 }
 
 // Chờ js/tai-de.js nạp xong các file đề rồi mới vẽ
@@ -451,6 +492,8 @@ DE_DA_TAI.then(() => {
   if (MA_DE_TU_LINK) {
     $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
     moDeTuLink();
+  } else if (MA_THU_MUC_TU_LINK) {
+    moThuMucTuLink();
   } else {
     veDanhSachDe();
     khoiPhucBaiDangLam();

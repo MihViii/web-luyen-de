@@ -292,6 +292,8 @@ th:not([data-sap]) { cursor: default; }
 }
 .dong-link { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .dong-link .ten-de { font-weight: 600; font-size: 14px; }
+.dong-link-thu-muc { padding: 8px 10px; margin: 0 -10px; border-radius: 8px; background: var(--accent-soft); }
+.dong-link-thu-muc .ten-de { color: var(--accent); }
 .dong-link input { min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font: 13px var(--font-mono); }
 @media (max-width: 600px) {
   .dong-link { grid-template-columns: minmax(0, 1fr) auto; }

@@ -33,6 +33,12 @@ function linkDe(id) {
   return new URL(`${trang}?de=${encodeURIComponent(id)}`, location.href).href;
 }
 
+// Link một thư mục trong Kho đề: học sinh chỉ thấy và làm các đề trong thư mục đó (xem app.js)
+function linkThuMuc(ma) {
+  const trang = location.protocol === "file:" ? "index.html" : "./";
+  return new URL(`${trang}?thu-muc=${encodeURIComponent(ma)}`, location.href).href;
+}
+
 const MOC_TAI = Date.now();
 
 // Nạp một file .js luôn lấy bản mới nhất. async = false: các file chạy đúng thứ tự được thêm vào.

@@ -114,11 +114,13 @@ Mỗi đề có một link riêng dạng `https://<tên-github>.github.io/phong-
 
 ### Kho đề: xếp đề vào thư mục
 
-Mục **Kho đề** ở đầu trang admin xếp đề theo thư mục (vd "Chương 1", "Đề khởi động") để tạo nhiều đề vẫn tìm nhanh. Thư mục chỉ để gia sư sắp xếp, học sinh không thấy.
+Mục **Kho đề** ở đầu trang admin xếp đề theo thư mục (vd "Chương 1", "Đề khởi động") để tạo nhiều đề vẫn tìm nhanh. **Trang học sinh cũng xếp đề theo đúng các thư mục và thứ tự này** (đề chưa xếp hiện ở nhóm "Đề khác"; chưa có thư mục nào thì xếp theo môn như cũ).
 
 - **Khi tạo đề:** ở trang Tạo đề từ PDF, gõ hoặc chọn **Thư mục trong Kho đề**. Lưu đề xong là đề nằm sẵn trong thư mục đó (chưa có thì tự tạo). Bỏ trống thì đề vào mục "Chưa xếp thư mục".
 - **Sắp xếp lại:** bấm **Sắp xếp thư mục** để thêm, đổi tên, xóa (đề bên trong chuyển sang "Chưa xếp"), đưa thư mục lên/xuống, chuyển đề sang thư mục khác bằng ô chọn bên phải mỗi đề, đổi thứ tự đề bằng ↑ ↓. Xong bấm **Lưu vào thư mục project**, chọn thư mục `web-luyen-de`, rồi push lên GitHub.
-- Cách xếp lưu trong `de-thi/kho-de.js`, nên máy nào mở trang admin (sau khi push) cũng thấy giống nhau. Đổi thư mục không làm đổi link của đề.
+- **Link cả thư mục:** mở thư mục trong Kho đề, dòng **Cả thư mục** (tô xanh) có link dạng `.../?thu-muc=<mã>`. Học sinh mở link này chỉ thấy các đề trong thư mục đó, làm xong một đề thì bấm **Chọn đề khác** để làm tiếp đề khác trong cùng thư mục. Thêm đề vào thư mục rồi push thì học sinh mở lại link là thấy đề mới.
+- Mỗi thư mục có một **mã** cố định (vd `chuong-1`, tạo từ tên lúc lập thư mục). Link thư mục đi theo mã, nên đổi tên thư mục thì link đã gửi vẫn dùng được; xóa thư mục thì link báo "thư mục đã bị xóa".
+- Cách xếp lưu trong `de-thi/kho-de.js`, nên máy nào mở trang (sau khi push) cũng thấy giống nhau. Đổi thư mục không làm đổi link riêng của đề.
 
 ---
 
