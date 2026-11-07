@@ -44,4 +44,5 @@
 // Đường dẫn tính từ thư mục de-thi. Thứ tự ở đây là thứ tự hiện trên trang.
 const DANH_SACH_THU_MUC_DE = [
   "toan/de-khoi-dong-so-11",
+  "toan/chuong-i-de-1",
 ];
