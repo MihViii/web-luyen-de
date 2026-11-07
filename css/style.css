@@ -271,6 +271,13 @@ tr:last-child td { border-bottom: 0; }
 .dong-ti-le .thanh { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
 .dong-ti-le .thanh div { height: 100%; }
 .dong-ti-le .pt { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.ti-le-de { border-top: 1px solid var(--line); }
+.ti-le-de > summary { display: flex; align-items: baseline; gap: 8px; padding: 8px 0; cursor: pointer; font-weight: 600; font-size: 14px; list-style: none; }
+.ti-le-de > summary::-webkit-details-marker { display: none; }
+.ti-le-de > summary::before { content: "▸"; width: 1ch; color: var(--muted); }
+.ti-le-de[open] > summary::before { content: "▾"; }
+.ti-le-de > summary .dem-cau { font-weight: 400; font-size: 13px; }
+.ti-le-noi-dung { display: grid; gap: 6px; padding-bottom: 10px; }
 .hang-cong-cu { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
 .hang-cong-cu select, .hang-cong-cu input { padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .trong { padding: 32px 20px; text-align: center; color: var(--muted); }

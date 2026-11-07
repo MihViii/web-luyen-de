@@ -58,17 +58,46 @@ $("form-mat-khau").addEventListener("submit", async (e) => {
   }
 });
 
+/* ---------- Lọc kết quả theo thư mục trong Kho đề ---------- */
+
+const LOC_CHUA_XEP = "__chua-xep";
+
+// Id mọi đề trong một thư mục và các thư mục con của nó
+const idDeTrongCay = (t) => [...t.de, ...t.con.flatMap(idDeTrongCay)];
+
+// Tập id đề ứng với lựa chọn ở ô Thư mục ("" = tất cả -> null)
+function deTheoThuMuc(maThuMuc) {
+  if (!maThuMuc) return null;
+  const kho = layKhoDe();
+  if (maThuMuc === LOC_CHUA_XEP) {
+    const daXep = new Set();
+    duyetKho(kho, (t) => t.de.forEach((id) => daXep.add(id)));
+    const conLai = new Set(tatCaKetQua.map((r) => r.maDe).filter((id) => !daXep.has(id)));
+    return conLai;
+  }
+  let ketQua = new Set();
+  duyetKho(kho, (t) => { if (t.ma === maThuMuc) ketQua = new Set(idDeTrongCay(t)); });
+  return ketQua;
+}
+
 function batDauHienThi() {
-  // Danh sách đề có trong dữ liệu
-  const cacDe = {};
-  tatCaKetQua.forEach((r) => { cacDe[r.maDe] = r.tenDe; });
-  $("loc-de").innerHTML = `<option value="">Tất cả đề</option>` +
-    Object.entries(cacDe).map(([ma, ten]) => `<option value="${anToan(ma)}">${anToan(ten)}</option>`).join("");
+  // Ô Thư mục: cây thư mục dạng đường dẫn "Toán 12 / Chương 1", kèm số lượt làm của cả cây con
+  const kho = layKhoDe();
+  const soLuot = (cacId) => tatCaKetQua.filter((r) => cacId.has(r.maDe)).length;
+  const luaChon = [];
+  duyetKho(kho, (t, duongDan) => {
+    luaChon.push(`<option value="${anToan(t.ma)}">${anToan(duongDan.join(" / "))} (${soLuot(new Set(idDeTrongCay(t)))} lượt)</option>`);
+  });
+  const chuaXep = deTheoThuMuc(LOC_CHUA_XEP);
+  const cu = $("loc-thu-muc").value;
+  $("loc-thu-muc").innerHTML = `<option value="">Tất cả thư mục (${tatCaKetQua.length} lượt)</option>` + luaChon.join("") +
+    (chuaXep.size ? `<option value="${LOC_CHUA_XEP}">Chưa xếp thư mục (${soLuot(chuaXep)} lượt)</option>` : "");
+  if ([...$("loc-thu-muc").options].some((o) => o.value === cu)) $("loc-thu-muc").value = cu; // tải lại vẫn giữ lựa chọn
   $("noi-dung").hidden = false;
   veLai();
 }
 
-$("loc-de").addEventListener("change", veLai);
+$("loc-thu-muc").addEventListener("change", veLai);
 $("loc-tim").addEventListener("input", veLai);
 document.querySelector("thead").addEventListener("click", (e) => {
   const th = e.target.closest("th[data-sap]");
@@ -80,11 +109,11 @@ document.querySelector("thead").addEventListener("click", (e) => {
 /* ---------- Vẽ ---------- */
 
 function locDuLieu() {
-  const maDe = $("loc-de").value;
-  const tim = $("loc-tim").value.trim().toLowerCase();
+  const cacDe = deTheoThuMuc($("loc-thu-muc").value);
+  const tim = boDau($("loc-tim").value.trim());
   return tatCaKetQua.filter((r) =>
-    (!maDe || r.maDe === maDe) &&
-    (!tim || `${r.hoTen} ${r.lop}`.toLowerCase().includes(tim)));
+    (!cacDe || cacDe.has(r.maDe)) &&
+    (!tim || boDau(`${r.hoTen} ${r.lop} ${r.tenDe}`).includes(tim)));
 }
 
 function veLai() {
@@ -108,29 +137,40 @@ function veTheSo(ds) {
   ].join("");
 }
 
-// Tỉ lệ đúng từng câu: chỉ hiện khi đang lọc 1 đề cụ thể
+// Tỉ lệ đúng từng câu, chia theo từng đề trong phần đang lọc (mỗi đề một mục bấm để mở; chỉ 1 đề thì mở sẵn)
 function veTiLe(ds) {
   const hop = $("ti-le");
-  const maDe = $("loc-de").value;
-  const coChiTiet = ds.filter((r) => r.chiTiet);
-  if (!maDe || !coChiTiet.length) { hop.hidden = true; return; }
-
-  const dong = [];
-  const them = (ten, tiLe) => dong.push({ ten, tiLe });
-  const ct0 = coChiTiet[0].chiTiet;
-  ct0.phan1.forEach((_, i) => them(`I.${i + 1}`, tb(coChiTiet, (c) => (c.phan1[i] ? 1 : 0))));
-  ct0.phan2.forEach((_, i) => them(`II.${i + 1}`, tb(coChiTiet, (c) => c.phan2[i] / 4)));
-  ct0.phan3.forEach((_, i) => them(`III.${i + 1}`, tb(coChiTiet, (c) => (c.phan3[i] ? 1 : 0))));
+  const theoDe = new Map();
+  ds.filter((r) => r.chiTiet).forEach((r) => {
+    if (!theoDe.has(r.maDe)) theoDe.set(r.maDe, { ten: r.tenDe, ds: [] });
+    theoDe.get(r.maDe).ds.push(r);
+  });
+  if (!theoDe.size) { hop.hidden = true; return; }
 
   const mau = (p) => (p >= 0.7 ? "var(--good)" : p >= 0.4 ? "var(--warn)" : "var(--red)");
-  hop.innerHTML = `
-    <span class="nhan">Tỉ lệ làm đúng từng câu (Phần II tính theo số ý đúng)</span>
-    ${dong.map((d) => `
+  const veMotDe = (coChiTiet) => {
+    const dong = [];
+    const them = (ten, tiLe) => dong.push({ ten, tiLe });
+    const ct0 = coChiTiet[0].chiTiet;
+    ct0.phan1.forEach((_, i) => them(`I.${i + 1}`, tb(coChiTiet, (c) => (c.phan1[i] ? 1 : 0))));
+    ct0.phan2.forEach((_, i) => them(`II.${i + 1}`, tb(coChiTiet, (c) => c.phan2[i] / 4)));
+    ct0.phan3.forEach((_, i) => them(`III.${i + 1}`, tb(coChiTiet, (c) => (c.phan3[i] ? 1 : 0))));
+    return dong.map((d) => `
       <div class="dong-ti-le">
         <span class="ten">${d.ten}</span>
         <span class="thanh"><div style="width:${d.tiLe * 100}%;background:${mau(d.tiLe)}"></div></span>
         <span class="pt">${Math.round(d.tiLe * 100)}%</span>
-      </div>`).join("")}`;
+      </div>`).join("");
+  };
+
+  const cacDe = [...theoDe.values()].sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
+  hop.innerHTML = `
+    <span class="nhan">Tỉ lệ làm đúng từng câu (Phần II tính theo số ý đúng)</span>
+    ${cacDe.map((d) => `
+      <details class="ti-le-de" ${cacDe.length === 1 ? "open" : ""}>
+        <summary>${anToan(d.ten)}<span class="dem-cau">${d.ds.length} lượt</span></summary>
+        <div class="ti-le-noi-dung">${veMotDe(d.ds)}</div>
+      </details>`).join("")}`;
   hop.hidden = false;
 }
 

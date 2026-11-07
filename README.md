@@ -79,7 +79,9 @@ Thử làm một bài và nộp: trong Sheet sẽ xuất hiện trang tính **Ke
 
 ### Xem bài làm của từng học sinh
 
-Mở `admin.html`, nhập mật khẩu, bấm **Tải kết quả**, rồi bấm vào một dòng (hoặc nút **Xem bài**) trong bảng điểm. Trang hiện:
+Mở `admin.html`, nhập mật khẩu, bấm **Tải kết quả**. Ô **Thư mục** lọc kết quả theo cây thư mục trong Kho đề (chọn một thư mục là thấy mọi đề trong đó, kể cả thư mục con; mỗi lựa chọn ghi sẵn số lượt làm). Ô **Tìm** tìm theo tên học sinh, lớp hoặc tên đề, gõ không dấu cũng được. Phần **Tỉ lệ làm đúng từng câu** chia theo từng đề trong phần đang lọc, bấm vào tên đề để mở.
+
+Bấm vào một dòng (hoặc nút **Xem bài**) trong bảng điểm để xem bài làm. Trang hiện:
 
 - Điểm từng phần và một lưới ô số câu tô màu: xanh là đúng, đỏ là sai, vàng là đúng một phần (Phần II), trắng là bỏ trống. Rê chuột lên ô để xem học sinh chọn gì, bấm vào ô để nhảy tới câu đó.
 - Từng câu kèm ảnh/đề bài: ô đỏ là phương án học sinh chọn sai, ô xanh là đáp án. Phần II, III ghi rõ học sinh trả lời gì và đáp án là gì. Nút **Chỉ câu sai** ẩn các câu làm đúng.
