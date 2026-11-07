@@ -431,7 +431,7 @@ async function guiKetQuaLenMayChu() {
   };
 
   o.className = "trang-thai-luu";
-  o.textContent = "Đang gửi kết quả cho thầy/cô…";
+  o.textContent = "Đang gửi kết quả cho MINHVI…";
   try {
     // Gửi dạng text/plain để trình duyệt không chặn (tránh lỗi CORS với Apps Script)
     const phanHoi = await fetch(CAU_HINH.LINK_APPS_SCRIPT, {
@@ -442,7 +442,7 @@ async function guiKetQuaLenMayChu() {
     const duLieu = await phanHoi.json();
     if (!duLieu.ok) throw new Error(duLieu.loi || "Máy chủ báo lỗi");
     o.classList.add("ok");
-    o.textContent = "Đã gửi kết quả cho thầy/cô";
+    o.textContent = "Đã gửi kết quả cho MINHVI";
   } catch (loi) {
     console.error(loi);
     o.classList.add("loi");
@@ -482,7 +482,7 @@ function moDeTuLink() {
   const de = DANH_SACH_DE.find((d) => d.id === MA_DE_TU_LINK);
   if (!de) {
     $("danh-sach-mon").innerHTML = `<p class="thong-bao-xem">Link này không đúng hoặc đề đã bị ẩn.
-      Bạn hỏi lại thầy/cô link của đề nhé.</p>`;
+      Bạn hỏi lại MINHVI link của đề nhé.</p>`;
     return;
   }
   if (khoiPhucBaiDangLam([de.id])) return;
@@ -495,7 +495,7 @@ function moThuMucTuLink() {
   if (!goc) {
     $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
     $("danh-sach-mon").innerHTML = `<p class="thong-bao-xem">Link này không đúng hoặc thư mục đã bị xóa.
-      Bạn hỏi lại thầy/cô link nhé.</p>`;
+      Bạn hỏi lại MINHVI link nhé.</p>`;
     return;
   }
   veDanhSachDe(goc);
