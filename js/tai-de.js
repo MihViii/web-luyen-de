@@ -1,10 +1,15 @@
 /* =====================================================================
    NẠP ĐỀ THI
    ---------------------------------------------------------------------
-   Đọc DANH_SACH_THU_MUC_DE (de-thi/danh-sach.js), nạp file de.js trong
+   Nạp de-thi/danh-sach.js (DANH_SACH_THU_MUC_DE), rồi nạp file de.js trong
    từng thư mục. Mỗi file de.js gọi themDe({...}) để đưa đề vào DANH_SACH_DE.
+   Nạp thêm de-thi/kho-de.js (KHO_DE, thư mục đề ở trang admin) nếu có.
    Nạp bằng thẻ <script> chứ không dùng fetch, để mở thẳng file index.html
    (không qua server) vẫn chạy.
+
+   Các file trong de-thi/ luôn được tải bản mới nhất (thêm ?t=... vào link):
+   GitHub Pages cho trình duyệt giữ bản cũ tới 10 phút, nếu không làm vậy thì
+   vừa push đề mới mà học sinh mở link vẫn thấy danh sách đề cũ.
 
    DE_DA_TAI: Promise xong khi mọi file đề đã nạp (kể cả file bị lỗi).
    ===================================================================== */
@@ -28,11 +33,24 @@ function linkDe(id) {
   return new URL(`${trang}?de=${encodeURIComponent(id)}`, location.href).href;
 }
 
-const DE_DA_TAI = Promise.all(DANH_SACH_THU_MUC_DE.map((thuMuc) => new Promise((xong) => {
-  const the = document.createElement("script");
-  the.src = "de-thi/" + thuMuc + "/de.js";
-  the.async = false; // chạy đúng thứ tự trong danh sách
-  the.onload = xong;
-  the.onerror = () => { console.error("Không tìm thấy file đề:", the.src); xong(); };
-  document.head.appendChild(the);
-})));
+const MOC_TAI = Date.now();
+
+// Nạp một file .js luôn lấy bản mới nhất. async = false: các file chạy đúng thứ tự được thêm vào.
+function napScript(duongDan) {
+  return new Promise((xong, loi) => {
+    const the = document.createElement("script");
+    the.src = `${duongDan}?t=${MOC_TAI}`;
+    the.async = false;
+    the.onload = xong;
+    the.onerror = () => loi(new Error("Không tìm thấy file: " + duongDan));
+    document.head.appendChild(the);
+  });
+}
+
+const DE_DA_TAI = Promise.all([
+  napScript("de-thi/kho-de.js").catch(() => {}), // chưa có file kho đề thì coi như chưa xếp thư mục
+  napScript("de-thi/danh-sach.js")
+    .then(() => Promise.all(DANH_SACH_THU_MUC_DE.map((thuMuc) =>
+      napScript(`de-thi/${thuMuc}/de.js`).catch((loi) => console.error(loi.message)))))
+    .catch((loi) => console.error(loi.message))
+]).then(() => {});
