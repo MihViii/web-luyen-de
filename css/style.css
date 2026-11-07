@@ -263,6 +263,19 @@ th:not([data-sap]) { cursor: default; }
 #bang tr[data-i]:hover td { background: var(--paper); }
 #bang tr.vua-xem td { background: var(--accent-soft); }
 
+/* Link riêng từng đề */
+.hop-link { margin-bottom: 20px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.hop-link summary { cursor: pointer; font-weight: 600; }
+.hop-link summary .dem-cau { font-weight: 400; margin-left: 6px; }
+#ds-link { display: grid; gap: 10px; margin-top: 14px; }
+.dong-link { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.dong-link .ten-de { font-weight: 600; font-size: 14px; }
+.dong-link input { min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font: 13px var(--font-mono); }
+@media (max-width: 600px) {
+  .dong-link { grid-template-columns: minmax(0, 1fr) auto; }
+  .dong-link .ten-de { grid-column: 1 / -1; }
+}
+
 /* Màn xem bài làm của một học sinh */
 .thanh-xem-bai { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 24px; }
 .thanh-xem-bai .hang-nut { align-items: center; }

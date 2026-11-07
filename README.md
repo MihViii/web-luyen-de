@@ -101,6 +101,15 @@ Bài làm được **chấm lại theo đáp án hiện tại trong `de.js`**. N
 
 Sau này thêm đề: upload thư mục đề mới (giữ đúng vị trí trong `de-thi/`) và file `de-thi/danh-sach.js` đã sửa lên GitHub.
 
+### Gửi link riêng từng đề
+
+Mỗi đề có một link riêng dạng `https://<tên-github>.github.io/phong-luyen-de/?de=<id đề>`. Học sinh mở link là vào thẳng đề đó, nút "Chọn đề khác" bị ẩn nên không làm nhầm đề.
+
+- Lấy link: mở `admin.html`, bấm mục **Link riêng từng đề**, bấm **Sao chép** cạnh đề cần gửi (không cần mật khẩu).
+- Đề phải được push lên GitHub rồi thì link mới dùng được.
+- Link chung (không có `?de=`) vẫn hiện đủ danh sách đề như cũ.
+- Link nhận đề theo `id`, nên đã gửi link rồi thì đừng đổi `id` của đề. Đề bị ẩn khỏi `danh-sach.js` thì link báo "Link này không đúng hoặc đề đã bị ẩn".
+
 ---
 
 ## 5. Thêm đề mới

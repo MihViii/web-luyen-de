@@ -482,7 +482,8 @@ async function luuDe(e) {
       await ghiVaoThuMuc(goc, tt.thuMuc, tep);
       o.className = "trang-thai-luu ok";
       o.innerHTML = `Đã lưu vào <code>de-thi/${anToan(tt.thuMuc)}/</code> và thêm vào <code>de-thi/danh-sach.js</code>.
-        Mở lại trang học sinh trên máy để xem thử, rồi commit và push lên GitHub là học sinh thấy đề.`;
+        Mở lại trang học sinh trên máy để xem thử, rồi commit và push lên GitHub là học sinh thấy đề.
+        Link riêng của đề để gửi học sinh: xem ở trang admin, mục "Link riêng từng đề".`;
     } else {
       o.textContent = "Đang tạo ảnh từng câu…";
       await taiZip(maTen, await taoCacTep(tt));

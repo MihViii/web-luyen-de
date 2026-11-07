@@ -22,6 +22,12 @@ function themDe(de) {
   DANH_SACH_DE.push(de);
 }
 
+// Link riêng của một đề: mở trang học sinh vào thẳng đề đó, không chọn nhầm đề khác được (xem app.js)
+function linkDe(id) {
+  const trang = location.protocol === "file:" ? "index.html" : "./";
+  return new URL(`${trang}?de=${encodeURIComponent(id)}`, location.href).href;
+}
+
 const DE_DA_TAI = Promise.all(DANH_SACH_THU_MUC_DE.map((thuMuc) => new Promise((xong) => {
   const the = document.createElement("script");
   the.src = "de-thi/" + thuMuc + "/de.js";

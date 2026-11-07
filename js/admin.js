@@ -333,6 +333,33 @@ function chuanHoaBaiLam(de, bl) {
   };
 }
 
+/* ---------- Link riêng từng đề (không cần mật khẩu, danh sách đề vốn công khai) ---------- */
+
+DE_DA_TAI.then(() => {
+  $("ds-link").innerHTML = DANH_SACH_DE.length ? DANH_SACH_DE.map((de) => `
+    <div class="dong-link">
+      <span class="ten-de">${anToan(de.ten)}</span>
+      <input readonly value="${anToan(linkDe(de.id))}" aria-label="Link đề ${anToan(de.ten)}">
+      <button type="button" class="nut nut-nho" data-chep>Sao chép</button>
+    </div>`).join("")
+    : `<p class="dem-cau">Chưa có đề nào trong de-thi/danh-sach.js.</p>`;
+});
+
+$("ds-link").addEventListener("focusin", (e) => { if (e.target.tagName === "INPUT") e.target.select(); });
+$("ds-link").addEventListener("click", async (e) => {
+  const nut = e.target.closest("button[data-chep]");
+  if (!nut) return;
+  const o = nut.previousElementSibling;
+  try {
+    await navigator.clipboard.writeText(o.value);
+  } catch (loi) { // trình duyệt chặn clipboard (mở bằng file://) -> chép kiểu cũ
+    o.select();
+    document.execCommand("copy");
+  }
+  nut.textContent = "Đã chép";
+  setTimeout(() => { nut.textContent = "Sao chép"; }, 1500);
+});
+
 /* ---------- Dữ liệu mẫu khi chưa kết nối Google Sheet ---------- */
 function taoDuLieuMau() {
   const de = DANH_SACH_DE[0];

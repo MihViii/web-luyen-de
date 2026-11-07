@@ -415,19 +415,45 @@ async function guiKetQuaLenMayChu() {
 
 /* ================= KHỞI ĐỘNG ================= */
 
-// Nếu học sinh lỡ tải lại trang khi đang làm bài -> mở lại đúng bài đó
-function khoiPhucBaiDangLam() {
+// Nếu học sinh lỡ tải lại trang khi đang làm bài -> mở lại đúng bài đó.
+// chiMaDe: đang mở bằng link riêng thì chỉ khôi phục bài dở của đúng đề đó. Trả về true nếu đã khôi phục.
+function khoiPhucBaiDangLam(chiMaDe) {
   let duLieu = null;
   try { duLieu = JSON.parse(localStorage.getItem(KHOA_LUU_TAM)); } catch (e) {}
-  if (!duLieu) return;
+  if (!duLieu) return false;
+  if (chiMaDe && duLieu.maDe !== chiMaDe) return false;
   const de = DANH_SACH_DE.find((d) => d.id === duLieu.maDe);
-  if (!de) { xoaLuuTam(); return; }
+  if (!de) { xoaLuuTam(); return false; }
   trangThai.de = de;
   batDauLamBai(duLieu); // nếu đã quá giờ, đồng hồ sẽ tự nộp ngay
+  return true;
+}
+
+// Link riêng của một đề (index.html?de=<id đề>, tạo bằng linkDe trong tai-de.js):
+// mở thẳng đề đó và ẩn nút "Chọn đề khác", để học sinh không làm nhầm đề.
+const MA_DE_TU_LINK = new URLSearchParams(location.search).get("de");
+
+function moDeTuLink() {
+  $("nut-quay-lai").hidden = true;
+  $("nut-ve-trang-chu").hidden = true;
+  const de = DANH_SACH_DE.find((d) => d.id === MA_DE_TU_LINK);
+  if (!de) {
+    $("danh-sach-mon").innerHTML = `<p class="thong-bao-xem">Link này không đúng hoặc đề đã bị ẩn.
+      Bạn hỏi lại thầy/cô link của đề nhé.</p>`;
+    return;
+  }
+  if (khoiPhucBaiDangLam(de.id)) return;
+  trangThai.de = de;
+  moManThongTin();
 }
 
 // Chờ js/tai-de.js nạp xong các file đề rồi mới vẽ
 DE_DA_TAI.then(() => {
-  veDanhSachDe();
-  khoiPhucBaiDangLam();
+  if (MA_DE_TU_LINK) {
+    $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
+    moDeTuLink();
+  } else {
+    veDanhSachDe();
+    khoiPhucBaiDangLam();
+  }
 });
