@@ -265,19 +265,22 @@ th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--li
 th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; cursor: pointer; user-select: none; }
 td.so, th.so { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 tr:last-child td { border-bottom: 0; }
-.ti-le { display: grid; gap: 6px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 24px; }
-.dong-ti-le { display: grid; grid-template-columns: 56px minmax(0, 1fr) 52px; gap: 10px; align-items: center; font-size: 13px; }
-.dong-ti-le .ten { font-family: var(--font-mono); color: var(--muted); }
-.dong-ti-le .thanh { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
-.dong-ti-le .thanh div { height: 100%; }
-.dong-ti-le .pt { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-.ti-le-de { border-top: 1px solid var(--line); }
-.ti-le-de > summary { display: flex; align-items: baseline; gap: 8px; padding: 8px 0; cursor: pointer; font-weight: 600; font-size: 14px; list-style: none; }
-.ti-le-de > summary::-webkit-details-marker { display: none; }
-.ti-le-de > summary::before { content: "▸"; width: 1ch; color: var(--muted); }
-.ti-le-de[open] > summary::before { content: "▾"; }
-.ti-le-de > summary .dem-cau { font-weight: 400; font-size: 13px; }
-.ti-le-noi-dung { display: grid; gap: 6px; padding-bottom: 10px; }
+/* Bảng "Theo học sinh": mỗi học sinh một dòng, mỗi đề một cột */
+.tong-hop { display: grid; gap: 10px; }
+.dau-tong-hop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.dau-tong-hop h2 { font-size: 20px; }
+.bang-tong-hop th { white-space: normal; min-width: 90px; vertical-align: bottom; }
+.bang-tong-hop th:first-child, .bang-tong-hop td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.diem-luot {
+  padding: 2px 4px; border: 0; border-radius: 4px; background: none;
+  font: 600 14px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink);
+  text-decoration: underline dotted var(--muted); text-underline-offset: 3px;
+}
+.diem-luot:hover { background: var(--accent-soft); }
+.diem-luot.cao { color: var(--good); }
+.diem-luot.thap { color: var(--red); }
+.mui-ten { margin: 0 2px; color: var(--muted); font-size: 12px; }
+.chua-lam { color: var(--muted); }
 .hang-cong-cu { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 20px; }
 .hang-cong-cu select, .hang-cong-cu input { padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .trong { padding: 32px 20px; text-align: center; color: var(--muted); }

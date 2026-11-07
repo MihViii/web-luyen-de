@@ -99,7 +99,7 @@ function batDauHienThi() {
 
 $("loc-thu-muc").addEventListener("change", veLai);
 $("loc-tim").addEventListener("input", veLai);
-document.querySelector("thead").addEventListener("click", (e) => {
+$("bang").closest("table").querySelector("thead").addEventListener("click", (e) => {
   const th = e.target.closest("th[data-sap]");
   if (!th) return;
   sapXep = { cot: th.dataset.sap, giam: sapXep.cot === th.dataset.sap ? !sapXep.giam : true };
@@ -119,14 +119,14 @@ function locDuLieu() {
 function veLai() {
   const ds = locDuLieu();
   veTheSo(ds);
-  veTiLe(ds);
   veBang(ds);
+  veTongHop(ds); // dùng dsDangHien do veBang tạo, để bấm điểm mở đúng bài
 }
 
 function veTheSo(ds) {
   const diem = ds.map((r) => Number(r.diem));
   const tb = diem.length ? diem.reduce((a, b) => a + b, 0) / diem.length : 0;
-  const soHocSinh = new Set(ds.map((r) => `${r.hoTen}|${r.lop}`.toLowerCase())).size;
+  const soHocSinh = new Set(ds.map(khoaHocSinh)).size;
   const o = (nhan, giaTri) => `<div><span class="nhan">${nhan}</span><span class="gia-tri">${giaTri}</span></div>`;
   $("the-so").innerHTML = [
     o("Lượt làm", ds.length),
@@ -137,46 +137,87 @@ function veTheSo(ds) {
   ].join("");
 }
 
-// Tỉ lệ đúng từng câu, chia theo từng đề trong phần đang lọc (mỗi đề một mục bấm để mở; chỉ 1 đề thì mở sẵn)
-function veTiLe(ds) {
-  const hop = $("ti-le");
-  const theoDe = new Map();
-  ds.filter((r) => r.chiTiet).forEach((r) => {
-    if (!theoDe.has(r.maDe)) theoDe.set(r.maDe, { ten: r.tenDe, ds: [] });
-    theoDe.get(r.maDe).ds.push(r);
+// Một học sinh = cùng họ tên (bỏ dấu, bỏ khoảng trắng thừa, không phân biệt hoa thường)
+const khoaHocSinh = (r) => boDau(String(r.hoTen ?? "").trim()).replace(/\s+/g, " ");
+
+// Cột của bảng "Theo học sinh": các đề trong thư mục đang lọc (kể cả thư mục con), đúng thứ tự trong Kho đề.
+// Bỏ đề đã ẩn khỏi danh sách mà chưa ai làm; giữ đề đã ẩn/xóa nếu có người làm.
+function cotTongHop(maThuMuc, ds) {
+  const kho = layKhoDe();
+  const tenDe = new Map(DANH_SACH_DE.map((d) => [d.id, d.ten]));
+  ds.forEach((r) => { if (!tenDe.has(r.maDe)) tenDe.set(r.maDe, r.tenDe); });
+  const theoThuTu = (t) => [...t.con.flatMap(theoThuTu), ...t.de]; // thư mục con trước, rồi đề, như cây
+  const daXep = kho.flatMap(theoThuTu);
+  const daXepSet = new Set(daXep);
+  const chuaXep = [...DANH_SACH_DE.map((d) => d.id), ...ds.map((r) => r.maDe)].filter((id) => !daXepSet.has(id));
+  let ids = [];
+  if (!maThuMuc) ids = [...daXep, ...chuaXep];
+  else if (maThuMuc === LOC_CHUA_XEP) ids = chuaXep;
+  else duyetKho(kho, (t) => { if (t.ma === maThuMuc) ids = theoThuTu(t); });
+  const coKetQua = new Set(ds.map((r) => r.maDe));
+  const dangDung = new Set(DANH_SACH_DE.map((d) => d.id));
+  return [...new Set(ids)].filter((id) => dangDung.has(id) || coKetQua.has(id)).map((id) => ({ id, ten: tenDe.get(id) }));
+}
+
+// Bảng "Theo học sinh": mỗi học sinh một dòng, mỗi đề một cột; ô là điểm từng lần làm (cũ -> mới), bấm để xem bài
+function veTongHop(ds) {
+  const hop = $("tong-hop");
+  if (!ds.length) { hop.hidden = true; return; }
+  const cot = cotTongHop($("loc-thu-muc").value, ds);
+
+  const theoHs = new Map();
+  [...ds].sort((a, b) => String(a.nopLuc).localeCompare(String(b.nopLuc))).forEach((r) => {
+    const khoa = khoaHocSinh(r);
+    if (!theoHs.has(khoa)) theoHs.set(khoa, { ten: "", lop: "", theoDe: new Map() });
+    const hs = theoHs.get(khoa);
+    // Tên: lấy cách viết đầy đủ nhất (nhiều chữ có dấu, viết hoa hơn), hòa thì lấy lần mới hơn. Lớp: lần mới nhất có ghi.
+    const doDayDu = (ten) => [...String(ten)].filter((c) => boDau(c) !== c || c !== c.toLowerCase()).length;
+    if (doDayDu(r.hoTen) >= doDayDu(hs.ten)) hs.ten = r.hoTen;
+    if (r.lop) hs.lop = r.lop;
+    if (!hs.theoDe.has(r.maDe)) hs.theoDe.set(r.maDe, []);
+    hs.theoDe.get(r.maDe).push(r);
   });
-  if (!theoDe.size) { hop.hidden = true; return; }
+  const hang = [...theoHs.values()].sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
 
-  const mau = (p) => (p >= 0.7 ? "var(--good)" : p >= 0.4 ? "var(--warn)" : "var(--red)");
-  const veMotDe = (coChiTiet) => {
-    const dong = [];
-    const them = (ten, tiLe) => dong.push({ ten, tiLe });
-    const ct0 = coChiTiet[0].chiTiet;
-    ct0.phan1.forEach((_, i) => them(`I.${i + 1}`, tb(coChiTiet, (c) => (c.phan1[i] ? 1 : 0))));
-    ct0.phan2.forEach((_, i) => them(`II.${i + 1}`, tb(coChiTiet, (c) => c.phan2[i] / 4)));
-    ct0.phan3.forEach((_, i) => them(`III.${i + 1}`, tb(coChiTiet, (c) => (c.phan3[i] ? 1 : 0))));
-    return dong.map((d) => `
-      <div class="dong-ti-le">
-        <span class="ten">${d.ten}</span>
-        <span class="thanh"><div style="width:${d.tiLe * 100}%;background:${mau(d.tiLe)}"></div></span>
-        <span class="pt">${Math.round(d.tiLe * 100)}%</span>
-      </div>`).join("");
+  const mauDiem = (r) => {
+    const thang10 = (Number(r.diem) / (Number(r.diemToiDa) || 10)) * 10;
+    return thang10 >= 8 ? "cao" : thang10 < 5 ? "thap" : "";
   };
+  const oDiem = (luot) => luot
+    ? luot.map((r) => `<button type="button" class="diem-luot ${mauDiem(r)}" data-mo="${dsDangHien.indexOf(r)}"
+        title="Nộp lúc ${anToan(ngayGio(r.nopLuc))}, bấm để xem bài">${vietDiem(r.diem)}</button>`).join(`<span class="mui-ten">→</span>`)
+    : `<span class="chua-lam">–</span>`;
 
-  const cacDe = [...theoDe.values()].sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
   hop.innerHTML = `
-    <span class="nhan">Tỉ lệ làm đúng từng câu (Phần II tính theo số ý đúng)</span>
-    ${cacDe.map((d) => `
-      <details class="ti-le-de" ${cacDe.length === 1 ? "open" : ""}>
-        <summary>${anToan(d.ten)}<span class="dem-cau">${d.ds.length} lượt</span></summary>
-        <div class="ti-le-noi-dung">${veMotDe(d.ds)}</div>
-      </details>`).join("")}`;
+    <div class="dau-tong-hop">
+      <h2>Theo học sinh</h2>
+      <span class="dem-cau">Mỗi ô là điểm từng lần làm (cũ → mới). Bấm vào điểm để xem bài.</span>
+    </div>
+    <div class="cuon-ngang">
+      <table class="bang-tong-hop">
+        <thead><tr>
+          <th>Học sinh</th><th>Lớp</th><th class="so">Đã làm</th>
+          ${cot.map((c) => `<th class="so">${anToan(c.ten)}</th>`).join("")}
+        </tr></thead>
+        <tbody>${hang.map((hs) => {
+          const soDaLam = cot.filter((c) => hs.theoDe.has(c.id)).length;
+          return `
+            <tr>
+              <td>${anToan(hs.ten)}</td>
+              <td>${anToan(hs.lop)}</td>
+              <td class="so"><b class="${soDaLam === cot.length ? "mau-dung" : ""}">${soDaLam}/${cot.length}</b></td>
+              ${cot.map((c) => `<td class="so">${oDiem(hs.theoDe.get(c.id))}</td>`).join("")}
+            </tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>`;
   hop.hidden = false;
 }
 
-function tb(ds, layGiaTri) {
-  return ds.reduce((tong, r) => tong + layGiaTri(r.chiTiet), 0) / ds.length;
-}
+$("tong-hop").addEventListener("click", (e) => {
+  const nut = e.target.closest("button[data-mo]");
+  if (nut && +nut.dataset.mo >= 0) moBai(+nut.dataset.mo);
+});
 
 function veBang(ds) {
   const { cot, giam } = sapXep;

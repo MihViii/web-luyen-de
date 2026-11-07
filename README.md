@@ -79,7 +79,7 @@ Thử làm một bài và nộp: trong Sheet sẽ xuất hiện trang tính **Ke
 
 ### Xem bài làm của từng học sinh
 
-Mở `admin.html`, nhập mật khẩu, bấm **Tải kết quả**. Ô **Thư mục** lọc kết quả theo cây thư mục trong Kho đề (chọn một thư mục là thấy mọi đề trong đó, kể cả thư mục con; mỗi lựa chọn ghi sẵn số lượt làm). Ô **Tìm** tìm theo tên học sinh, lớp hoặc tên đề, gõ không dấu cũng được. Phần **Tỉ lệ làm đúng từng câu** chia theo từng đề trong phần đang lọc, bấm vào tên đề để mở.
+Mở `admin.html`, nhập mật khẩu, bấm **Tải kết quả**. Ô **Thư mục** lọc kết quả theo cây thư mục trong Kho đề (chọn một thư mục là thấy mọi đề trong đó, kể cả thư mục con; mỗi lựa chọn ghi sẵn số lượt làm). Ô **Tìm** tìm theo tên học sinh, lớp hoặc tên đề, gõ không dấu cũng được. Bảng **Theo học sinh** cho biết mỗi học sinh đã làm mấy đề trong thư mục đang lọc (cột **Đã làm**, vd `2/3`) và điểm từng đề; làm nhiều lần thì hiện đủ các lần theo thứ tự cũ → mới (vd `4,25 → 7,5`), bấm vào điểm để xem bài làm lần đó. Học sinh được nhận theo họ tên (không phân biệt dấu, hoa thường).
 
 Bấm vào một dòng (hoặc nút **Xem bài**) trong bảng điểm để xem bài làm. Trang hiện:
 
