@@ -25,12 +25,14 @@ web-luyen-de/
 │   ├── config.js       Cấu hình: link Apps Script, tên lớp   ← SỬA FILE NÀY
 │   ├── cham-diem.js    Logic chấm điểm (hàm thuần, không đụng giao diện)
 │   ├── xem-lai.js      Vẽ phần xem lại từng câu (dùng chung cho trang học sinh và thống kê)
+│   ├── kho-de.js       Đọc/ghi Kho đề (thư mục đề ở trang admin)
 │   ├── tai-de.js       Nạp các file đề theo danh sách
 │   ├── app.js          Điều khiển trang học sinh
 │   ├── admin.js        Điều khiển trang thống kê
 │   └── tao-de.js       Cắt câu từ PDF, xuất thư mục đề
 ├── de-thi/             Ngân hàng đề, mỗi đề một thư mục      ← THÊM ĐỀ Ở ĐÂY
 │   ├── danh-sach.js    Liệt kê các đề đang dùng
+│   ├── kho-de.js       Xếp đề vào thư mục (sửa bằng trang admin)
 │   └── toan/
 │       └── de-khoi-dong-so-11/
 │           ├── de.js   Nội dung đề
@@ -105,10 +107,18 @@ Sau này thêm đề: upload thư mục đề mới (giữ đúng vị trí tron
 
 Mỗi đề có một link riêng dạng `https://<tên-github>.github.io/phong-luyen-de/?de=<id đề>`. Học sinh mở link là vào thẳng đề đó, nút "Chọn đề khác" bị ẩn nên không làm nhầm đề.
 
-- Lấy link: mở `admin.html`, bấm mục **Link riêng từng đề**, bấm **Sao chép** cạnh đề cần gửi (không cần mật khẩu).
+- Lấy link: mở `admin.html`, trong mục **Kho đề** mở thư mục (hoặc gõ tên đề vào ô tìm), bấm **Sao chép** cạnh đề cần gửi. Không cần mật khẩu.
 - Đề phải được push lên GitHub rồi thì link mới dùng được.
 - Link chung (không có `?de=`) vẫn hiện đủ danh sách đề như cũ.
 - Link nhận đề theo `id`, nên đã gửi link rồi thì đừng đổi `id` của đề. Đề bị ẩn khỏi `danh-sach.js` thì link báo "Link này không đúng hoặc đề đã bị ẩn".
+
+### Kho đề: xếp đề vào thư mục
+
+Mục **Kho đề** ở đầu trang admin xếp đề theo thư mục (vd "Chương 1", "Đề khởi động") để tạo nhiều đề vẫn tìm nhanh. Thư mục chỉ để gia sư sắp xếp, học sinh không thấy.
+
+- **Khi tạo đề:** ở trang Tạo đề từ PDF, gõ hoặc chọn **Thư mục trong Kho đề**. Lưu đề xong là đề nằm sẵn trong thư mục đó (chưa có thì tự tạo). Bỏ trống thì đề vào mục "Chưa xếp thư mục".
+- **Sắp xếp lại:** bấm **Sắp xếp thư mục** để thêm, đổi tên, xóa (đề bên trong chuyển sang "Chưa xếp"), đưa thư mục lên/xuống, chuyển đề sang thư mục khác bằng ô chọn bên phải mỗi đề, đổi thứ tự đề bằng ↑ ↓. Xong bấm **Lưu vào thư mục project**, chọn thư mục `web-luyen-de`, rồi push lên GitHub.
+- Cách xếp lưu trong `de-thi/kho-de.js`, nên máy nào mở trang admin (sau khi push) cũng thấy giống nhau. Đổi thư mục không làm đổi link của đề.
 
 ---
 

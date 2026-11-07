@@ -37,10 +37,22 @@
         </div>
       </header>
 
-      <details class="hop-link">
-        <summary>Link riêng từng đề <span class="dem-cau">gửi cho học sinh, mở ra là vào thẳng đề đó</span></summary>
-        <div id="ds-link"></div>
-      </details>
+      <!-- Kho đề: đề xếp theo thư mục, mỗi đề có link riêng để gửi học sinh (không cần mật khẩu) -->
+      <section class="kho-de" aria-labelledby="tieu-de-kho">
+        <div class="dau-kho">
+          <h2 id="tieu-de-kho">Kho đề</h2>
+          <input type="search" id="tim-de" placeholder="Tìm đề hoặc thư mục" aria-label="Tìm đề hoặc thư mục">
+          <button type="button" class="nut nut-nho" id="nut-sap-xep">Sắp xếp thư mục</button>
+        </div>
+        <p class="goi-y-kho" id="goi-y-kho">Bấm vào thư mục để mở, rồi bấm <b>Sao chép</b> để lấy link riêng của đề gửi cho học sinh.</p>
+        <div id="ds-thu-muc"></div>
+        <div class="hang-nut" id="thanh-luu-kho" hidden>
+          <button type="button" class="nut" id="nut-them-thu-muc">+ Thư mục mới</button>
+          <button type="button" class="nut nut-chinh" id="nut-luu-kho">Lưu vào thư mục project</button>
+          <button type="button" class="nut" id="nut-huy-sap-xep">Hủy</button>
+        </div>
+        <p class="dem-cau" id="tt-luu-kho"></p>
+      </section>
 
       <form class="hang-cong-cu" id="form-mat-khau">
         <label for="o-mat-khau" class="nhan">Mật khẩu</label>
@@ -105,9 +117,11 @@
 
   <script src="js/config.js"></script>
   <script src="de-thi/danh-sach.js"></script>
+  <script src="de-thi/kho-de.js"></script>
   <script src="js/tai-de.js"></script>
   <script src="js/cham-diem.js"></script>
   <script src="js/xem-lai.js"></script>
+  <script src="js/kho-de.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

@@ -333,20 +333,111 @@ function chuanHoaBaiLam(de, bl) {
   };
 }
 
-/* ---------- Link riêng từng đề (không cần mật khẩu, danh sách đề vốn công khai) ---------- */
+/* ---------- Kho đề: đề xếp theo thư mục + link riêng (không cần mật khẩu, danh sách đề vốn công khai) ---------- */
+// Thư mục lưu trong de-thi/kho-de.js; đọc/ghi bằng các hàm trong js/kho-de.js.
+
+// Mỗi thư mục: { ten, de: [id đề đang hiện], an: [id đề đã bị ẩn khỏi danh-sach.js, giữ lại khi lưu] }.
+// Phần tử cuối luôn là "Chưa xếp thư mục" (ten: null).
+let khoDangXem = [];
+let khoTam = null;              // bản đang sửa trong chế độ "Sắp xếp thư mục", null = đang xem
+const thuMucDangMo = new Set(); // nhớ thư mục nào đang mở khi vẽ lại
+
+const boDau = (s) => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+const tenHien = (t) => (t.ten === null ? "Chưa xếp thư mục" : t.ten.trim() || "(chưa đặt tên)");
+
+function dungKho(kho) {
+  const coDe = new Set(DANH_SACH_DE.map((d) => d.id));
+  const daXep = new Set();
+  const ds = kho.map((t) => {
+    const tm = { ten: String(t.ten ?? ""), de: [], an: [] };
+    (Array.isArray(t.de) ? t.de : []).forEach((id) => {
+      if (daXep.has(id)) return; // một đề nằm ở 2 thư mục (sửa tay) thì lấy thư mục đầu
+      daXep.add(id);
+      (coDe.has(id) ? tm.de : tm.an).push(id);
+    });
+    return tm;
+  });
+  ds.push({ ten: null, de: DANH_SACH_DE.map((d) => d.id).filter((id) => !daXep.has(id)), an: [] });
+  return ds;
+}
+
+function veKho() {
+  const sua = khoTam !== null;
+  const ds = sua ? khoTam : khoDangXem;
+  const theoId = new Map(DANH_SACH_DE.map((d) => [d.id, d]));
+  const tim = sua ? "" : boDau($("tim-de").value.trim());
+  const cuoi = ds.length - 1; // vị trí "Chưa xếp thư mục"
+
+  const html = ds.map((t, k) => {
+    if (t.ten === null && !t.de.length) return ""; // không có đề nào chưa xếp thì ẩn mục này
+    const khopThuMuc = tim && t.ten !== null && boDau(t.ten).includes(tim);
+    const cacI = t.de.map((_, i) => i).filter((i) => !tim || khopThuMuc || boDau(theoId.get(t.de[i]).ten).includes(tim));
+    if (tim && !cacI.length) return "";
+
+    if (!sua) {
+      const mo = tim || thuMucDangMo.has(tenHien(t)) || ds.length === 1;
+      return `
+        <details class="thu-muc" data-ten="${anToan(tenHien(t))}" ${mo ? "open" : ""}>
+          <summary><span class="ten-thu-muc">${anToan(tenHien(t))}</span><span class="dem-cau">${t.de.length} đề</span></summary>
+          <div class="ds-de">${cacI.map((i) => {
+            const de = theoId.get(t.de[i]);
+            return `
+              <div class="dong-link">
+                <span class="ten-de">${anToan(de.ten)}</span>
+                <input readonly value="${anToan(linkDe(de.id))}" aria-label="Link đề ${anToan(de.ten)}">
+                <button type="button" class="nut nut-nho" data-chep>Sao chép</button>
+              </div>`;
+          }).join("") || `<p class="dem-cau">Thư mục trống</p>`}</div>
+        </details>`;
+    }
+
+    // Chế độ sắp xếp: đổi tên / di chuyển / xóa thư mục, chuyển đề sang thư mục khác, đổi thứ tự đề
+    const chonThuMuc = (kHienTai) => ds.map((x, kk) =>
+      `<option value="${kk}" ${kk === kHienTai ? "selected" : ""}>${anToan(tenHien(x))}</option>`).join("");
+    const nut = (lam, chu, nhan, tat, i = "") =>
+      `<button type="button" class="nut nut-nho" data-lam="${lam}" data-tm="${k}" data-i="${i}" aria-label="${nhan}" ${tat ? "disabled" : ""}>${chu}</button>`;
+    return `
+      <div class="thu-muc dang-sua">
+        <div class="dau-thu-muc">
+          ${t.ten === null ? `<span class="ten-thu-muc">Chưa xếp thư mục</span>` : `
+            <input class="o-ten-thu-muc" data-doi-ten="${k}" value="${anToan(t.ten)}" placeholder="Tên thư mục" aria-label="Tên thư mục">
+            ${nut("tm-len", "↑", "Đưa thư mục lên", k === 0)}
+            ${nut("tm-xuong", "↓", "Đưa thư mục xuống", k >= cuoi - 1)}
+            ${nut("tm-xoa", "Xóa thư mục", "Xóa thư mục (đề bên trong chuyển sang Chưa xếp)", false)}`}
+        </div>
+        <div class="ds-de">${t.de.map((id, i) => `
+          <div class="dong-sua">
+            <span class="ten-de">${anToan(theoId.get(id).ten)}</span>
+            ${nut("de-len", "↑", "Đưa đề lên", i === 0, i)}
+            ${nut("de-xuong", "↓", "Đưa đề xuống", i === t.de.length - 1, i)}
+            <select data-chuyen data-tm="${k}" data-i="${i}" aria-label="Chuyển đề ${anToan(theoId.get(id).ten)} sang thư mục">${chonThuMuc(k)}</select>
+          </div>`).join("") || `<p class="dem-cau">Thư mục trống</p>`}</div>
+      </div>`;
+  }).join("");
+
+  $("ds-thu-muc").innerHTML = html || (tim
+    ? `<p class="dem-cau">Không có đề hay thư mục nào khớp “${anToan($("tim-de").value.trim())}”.</p>`
+    : `<p class="dem-cau">Chưa có đề nào trong de-thi/danh-sach.js.</p>`);
+}
 
 DE_DA_TAI.then(() => {
-  $("ds-link").innerHTML = DANH_SACH_DE.length ? DANH_SACH_DE.map((de) => `
-    <div class="dong-link">
-      <span class="ten-de">${anToan(de.ten)}</span>
-      <input readonly value="${anToan(linkDe(de.id))}" aria-label="Link đề ${anToan(de.ten)}">
-      <button type="button" class="nut nut-nho" data-chep>Sao chép</button>
-    </div>`).join("")
-    : `<p class="dem-cau">Chưa có đề nào trong de-thi/danh-sach.js.</p>`;
+  khoDangXem = dungKho(layKhoDe());
+  veKho();
 });
+$("tim-de").addEventListener("input", veKho);
 
-$("ds-link").addEventListener("focusin", (e) => { if (e.target.tagName === "INPUT") e.target.select(); });
-$("ds-link").addEventListener("click", async (e) => {
+// Nhớ thư mục mở/đóng (sự kiện toggle không nổi bọt nên bắt ở pha capture). Đang tìm thì không nhớ.
+$("ds-thu-muc").addEventListener("toggle", (e) => {
+  if (!e.target.matches("details.thu-muc") || $("tim-de").value.trim()) return;
+  if (e.target.open) thuMucDangMo.add(e.target.dataset.ten);
+  else thuMucDangMo.delete(e.target.dataset.ten);
+}, true);
+
+$("ds-thu-muc").addEventListener("focusin", (e) => { if (e.target.matches("input[readonly]")) e.target.select(); });
+$("ds-thu-muc").addEventListener("click", async (e) => {
+  const nutSua = e.target.closest("button[data-lam]");
+  if (nutSua) { suaKho(nutSua.dataset.lam, +nutSua.dataset.tm, +nutSua.dataset.i); return; }
+
   const nut = e.target.closest("button[data-chep]");
   if (!nut) return;
   const o = nut.previousElementSibling;
@@ -358,6 +449,102 @@ $("ds-link").addEventListener("click", async (e) => {
   }
   nut.textContent = "Đã chép";
   setTimeout(() => { nut.textContent = "Sao chép"; }, 1500);
+});
+
+function suaKho(lam, k, i) {
+  const doiCho = (mang, a, b) => { [mang[a], mang[b]] = [mang[b], mang[a]]; };
+  const chuaXep = khoTam[khoTam.length - 1];
+  if (lam === "de-len") doiCho(khoTam[k].de, i, i - 1);
+  if (lam === "de-xuong") doiCho(khoTam[k].de, i, i + 1);
+  if (lam === "tm-len") doiCho(khoTam, k, k - 1);
+  if (lam === "tm-xuong") doiCho(khoTam, k, k + 1);
+  if (lam === "tm-xoa") chuaXep.de.push(...khoTam.splice(k, 1)[0].de);
+  veKho();
+}
+
+// Chuyển đề sang thư mục khác (thêm vào cuối thư mục đó)
+$("ds-thu-muc").addEventListener("change", (e) => {
+  const o = e.target;
+  if (!o.matches("select[data-chuyen]")) return;
+  const [id] = khoTam[+o.dataset.tm].de.splice(+o.dataset.i, 1);
+  khoTam[+o.value].de.push(id);
+  veKho();
+});
+
+// Đổi tên thư mục: sửa thẳng, chỉ cập nhật chữ trong các ô chọn thư mục để không mất con trỏ đang gõ
+$("ds-thu-muc").addEventListener("input", (e) => {
+  const o = e.target;
+  if (o.dataset.doiTen === undefined) return;
+  khoTam[+o.dataset.doiTen].ten = o.value;
+  document.querySelectorAll(`select[data-chuyen] option[value="${o.dataset.doiTen}"]`)
+    .forEach((op) => { op.textContent = tenHien(khoTam[+o.dataset.doiTen]); });
+});
+
+function batCheDoSua(bat) {
+  khoTam = bat ? structuredClone(khoDangXem) : null;
+  if (bat) $("tim-de").value = "";
+  $("tim-de").disabled = bat;
+  $("nut-sap-xep").hidden = bat;
+  $("thanh-luu-kho").hidden = !bat;
+  $("goi-y-kho").innerHTML = bat
+    ? "Đổi tên, xóa, đưa thư mục lên xuống; chọn thư mục ở ô bên phải mỗi đề để chuyển đề. Xong bấm <b>Lưu vào thư mục project</b> rồi push lên GitHub."
+    : "Bấm vào thư mục để mở, rồi bấm <b>Sao chép</b> để lấy link riêng của đề gửi cho học sinh.";
+  veKho();
+}
+
+$("nut-sap-xep").addEventListener("click", () => { $("tt-luu-kho").textContent = ""; batCheDoSua(true); });
+$("nut-huy-sap-xep").addEventListener("click", () => batCheDoSua(false));
+$("nut-them-thu-muc").addEventListener("click", () => {
+  khoTam.splice(khoTam.length - 1, 0, { ten: "", de: [], an: [] }); // thêm ngay trên "Chưa xếp thư mục"
+  veKho();
+  const cacO = document.querySelectorAll(".o-ten-thu-muc");
+  cacO[cacO.length - 1].focus();
+});
+
+$("nut-luu-kho").addEventListener("click", async () => {
+  const tt = $("tt-luu-kho");
+  const thuMuc = khoTam.filter((t) => t.ten !== null);
+  const ten = thuMuc.map((t) => t.ten.trim());
+  if (ten.some((x) => !x)) { tt.textContent = "Có thư mục chưa đặt tên."; return; }
+  if (new Set(ten.map((x) => x.toLowerCase())).size !== ten.length) { tt.textContent = "Có hai thư mục trùng tên."; return; }
+  const kho = thuMuc.map((t) => ({ ten: t.ten.trim(), de: [...t.de, ...t.an] }));
+
+  // Safari/Firefox không ghi thẳng vào thư mục được: tải file về để tự chép vào
+  if (!window.showDirectoryPicker) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([vietKhoDe(kho)], { type: "text/javascript" }));
+    a.download = "kho-de.js";
+    a.click();
+    khoDangXem = dungKho(kho);
+    batCheDoSua(false);
+    tt.textContent = "Trình duyệt này không ghi thẳng vào thư mục được, nên đã tải về file kho-de.js. Chép đè vào thư mục de-thi/ của project rồi push lên GitHub.";
+    return;
+  }
+
+  let goc;
+  try {
+    goc = await showDirectoryPicker({ id: "web-luyen-de", mode: "readwrite" });
+  } catch (loi) {
+    if (loi.name !== "AbortError") tt.textContent = "Không mở được thư mục: " + loi.message;
+    return;
+  }
+  try {
+    const daBiet = new Set([...DANH_SACH_DE.map((d) => d.id), ...kho.flatMap((t) => t.de)]);
+    await ghiKhoDe(goc, (khoTrenMay) => {
+      // Giữ các đề có trong file trên máy mà trang này chưa biết (vd đề vừa tạo trên máy, chưa push)
+      khoTrenMay.forEach((t) => (t.de || []).forEach((id) => {
+        if (daBiet.has(id)) return;
+        daBiet.add(id);
+        themDeVaoKho(kho, String(t.ten), id);
+      }));
+      return kho;
+    });
+    khoDangXem = dungKho(kho);
+    batCheDoSua(false);
+    tt.textContent = "Đã lưu vào de-thi/kho-de.js. Push lên GitHub để trang admin trên mạng cũng thấy cách xếp mới.";
+  } catch (loi) {
+    tt.textContent = "Chưa lưu được: " + loi.message;
+  }
 });
 
 /* ---------- Dữ liệu mẫu khi chưa kết nối Google Sheet ---------- */

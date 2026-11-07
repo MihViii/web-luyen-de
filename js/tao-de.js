@@ -56,6 +56,7 @@ function layThongTin() {
     thoiGian: Number($("o-thoi-gian").value),
     diemPhan1: Number($("o-diem1").value),
     diemPhan3: Number($("o-diem3").value),
+    thuMucKho: $("o-thu-muc-kho").value.trim(), // thư mục trong Kho đề (trang admin), không bắt buộc
     thuMuc: maMon && maTen ? `${maMon}/${maTen}` : "",
     id: maMon && maTen ? `${maMon}-${maTen}` : ""
   };
@@ -72,6 +73,9 @@ $("o-mon").addEventListener("change", () => {
   $("o-diem3").value = khongDau($("o-mon").value) === "toan" ? 0.5 : 0.25;
 });
 capNhatDuongDan();
+
+// Gợi ý các thư mục đã có trong Kho đề (de-thi/kho-de.js)
+$("ds-thu-muc-kho").innerHTML = layKhoDe().map((t) => `<option value="${anToan(t.ten)}"></option>`).join("");
 
 /* ================= BƯỚC 2: ĐỌC PDF ================= */
 
@@ -480,17 +484,28 @@ async function luuDe(e) {
       const tep = await taoCacTep(tt);
       o.textContent = "Đang ghi file…";
       await ghiVaoThuMuc(goc, tt.thuMuc, tep);
+      // Xếp đề vào thư mục trong Kho đề. Lỗi ở bước này không làm hỏng đề vừa lưu, chỉ báo để xếp tay ở admin.
+      let veKho = `Đề nằm ở mục "Chưa xếp thư mục" trong Kho đề (trang admin).`;
+      if (tt.thuMucKho) {
+        try {
+          await ghiKhoDe(goc, (kho) => themDeVaoKho(kho, tt.thuMucKho, tt.id));
+          veKho = `Đề đã vào thư mục <b>${anToan(tt.thuMucKho)}</b> trong Kho đề (trang admin).`;
+        } catch (loi) {
+          veKho = `Chưa xếp được vào thư mục (${anToan(loi.message)}), vào trang admin để xếp.`;
+        }
+      }
       o.className = "trang-thai-luu ok";
       o.innerHTML = `Đã lưu vào <code>de-thi/${anToan(tt.thuMuc)}/</code> và thêm vào <code>de-thi/danh-sach.js</code>.
-        Mở lại trang học sinh trên máy để xem thử, rồi commit và push lên GitHub là học sinh thấy đề.
-        Link riêng của đề để gửi học sinh: xem ở trang admin, mục "Link riêng từng đề".`;
+        ${veKho} Mở lại trang học sinh trên máy để xem thử, rồi commit và push lên GitHub là học sinh thấy đề.
+        Link riêng của đề nằm trong Kho đề ở trang admin.`;
     } else {
       o.textContent = "Đang tạo ảnh từng câu…";
       await taiZip(maTen, await taoCacTep(tt));
       o.className = "trang-thai-luu ok";
       o.innerHTML = `Đã tải về <code>${anToan(maTen)}.zip</code>.
         Giải nén rồi chép thư mục <code>${anToan(maTen)}</code> vào <code>de-thi/${anToan(maMon)}/</code>,
-        sau đó thêm dòng <code>"${anToan(tt.thuMuc)}",</code> vào <code>de-thi/danh-sach.js</code>.`;
+        sau đó thêm dòng <code>"${anToan(tt.thuMuc)}",</code> vào <code>de-thi/danh-sach.js</code>.
+        Đề sẽ nằm ở mục "Chưa xếp thư mục" trong Kho đề, vào trang admin để xếp.`;
     }
     trangThai.daLuu = true;
   } catch (loi) {

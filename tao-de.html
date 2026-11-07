@@ -36,6 +36,10 @@
         <label>Tên đề
           <input id="o-ten" placeholder="Đề thi thử số 2">
         </label>
+        <label>Thư mục trong Kho đề (không bắt buộc)
+          <input id="o-thu-muc-kho" list="ds-thu-muc-kho" placeholder="Chương 1" autocomplete="off">
+        </label>
+        <datalist id="ds-thu-muc-kho"></datalist>
         <label>Mô tả (không bắt buộc)
           <input id="o-mo-ta" placeholder="Thi thử THPT Chuyên ... lần 1">
         </label>
@@ -95,7 +99,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- Nạp các đề có sẵn để kiểm tra trùng tên -->
   <script src="de-thi/danh-sach.js"></script>
+  <script src="de-thi/kho-de.js"></script>
   <script src="js/tai-de.js"></script>
+  <script src="js/kho-de.js"></script>
   <script src="js/cham-diem.js"></script>
   <script src="js/tao-de.js"></script>
 </body>
