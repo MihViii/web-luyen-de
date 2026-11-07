@@ -46,4 +46,10 @@ const DANH_SACH_THU_MUC_DE = [
   "toan/de-khoi-dong-so-11",
   "toan/chuong-i-de-1",
   "toan/chuong-1-de-2",
+  "toan/de-15",
+  "toan/de-16",
+  "toan/de-17",
+  "toan/de-18",
+  "toan/de-19",
+  "toan/de-20",
 ];
