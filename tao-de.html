@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@500;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=20261107b">
+  <link rel="stylesheet" href="css/style.css?v=20261107c">
 </head>
 <body>
   <div class="khung khung-rong">
@@ -37,7 +37,8 @@
           <input id="o-ten" placeholder="Đề thi thử số 2">
         </label>
         <label>Thư mục trong Kho đề (không bắt buộc)
-          <input id="o-thu-muc-kho" list="ds-thu-muc-kho" placeholder="Chương 1" autocomplete="off">
+          <input id="o-thu-muc-kho" list="ds-thu-muc-kho" placeholder="Toán 12 / Chương 1" autocomplete="off"
+                 title="Thư mục con viết cách nhau bằng dấu /. Thư mục chưa có sẽ được tạo.">
         </label>
         <datalist id="ds-thu-muc-kho"></datalist>
         <label>Mô tả (không bắt buộc)
@@ -99,9 +100,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- ?v=...: số phiên bản. Sửa file trong css/ hoặc js/ thì tăng số này ở cả 3 trang (index, admin, tao-de),
        để trình duyệt tải bản mới thay vì dùng bản cũ đã lưu (GitHub Pages cho giữ tới 10 phút). -->
-  <script src="js/tai-de.js?v=20261107b"></script> <!-- nạp các đề có sẵn để kiểm tra trùng tên -->
-  <script src="js/kho-de.js?v=20261107b"></script>
-  <script src="js/cham-diem.js?v=20261107b"></script>
-  <script src="js/tao-de.js?v=20261107b"></script>
+  <script src="js/tai-de.js?v=20261107c"></script> <!-- nạp các đề có sẵn để kiểm tra trùng tên -->
+  <script src="js/kho-de.js?v=20261107c"></script>
+  <script src="js/cham-diem.js?v=20261107c"></script>
+  <script src="js/tao-de.js?v=20261107c"></script>
 </body>
 </html>

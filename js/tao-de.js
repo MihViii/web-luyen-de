@@ -76,7 +76,7 @@ capNhatDuongDan();
 
 // Gợi ý các thư mục đã có trong Kho đề (de-thi/kho-de.js, js/tai-de.js nạp)
 DE_DA_TAI.then(() => {
-  $("ds-thu-muc-kho").innerHTML = layKhoDe().map((t) => `<option value="${anToan(t.ten)}"></option>`).join("");
+  $("ds-thu-muc-kho").innerHTML = cacDuongDanKho(layKhoDe()).map((d) => `<option value="${anToan(d)}"></option>`).join("");
 });
 
 /* ================= BƯỚC 2: ĐỌC PDF ================= */

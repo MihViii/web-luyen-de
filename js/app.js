@@ -55,52 +55,71 @@ function xoaLuuTam() {
 
 /* ================= MÀN 1: CHỌN ĐỀ ================= */
 
-// Gom đề thành nhóm theo Kho đề (de-thi/kho-de.js, gia sư sắp xếp ở trang admin), đúng thứ tự.
-// Đề chưa xếp vào thư mục nào: gom vào "Đề khác"; nếu chưa có thư mục nào thì gom theo môn như cũ.
-function nhomDe() {
+// Cây đề theo Kho đề (de-thi/kho-de.js, gia sư sắp xếp ở trang admin), đúng thứ tự.
+// Mỗi thư mục: { ten, ma, con: [thư mục con], cacDe: [đề nằm thẳng trong đó], tong: số đề cả cây con }.
+// conLai: đề chưa xếp vào thư mục nào.
+function cayDe() {
   const theoId = new Map(DANH_SACH_DE.map((d) => [d.id, d]));
   const daXep = new Set();
-  const nhom = layKhoDe().map((t) => {
-    const cacDe = [];
-    t.de.forEach((id) => {
-      if (!theoId.has(id) || daXep.has(id)) return; // đề đã ẩn, hoặc nằm ở 2 thư mục
-      daXep.add(id);
-      cacDe.push(theoId.get(id));
-    });
-    return { ten: t.ten, ma: t.ma, cacDe };
+  const dung = (ds) => ds.map((t) => {
+    const cacDe = t.de.filter((id) => theoId.has(id)).map((id) => { daXep.add(id); return theoId.get(id); });
+    const con = dung(t.con);
+    return { ten: t.ten, ma: t.ma, con, cacDe, tong: cacDe.length + con.reduce((tong, c) => tong + c.tong, 0) };
   });
-  const conLai = DANH_SACH_DE.filter((d) => !daXep.has(d.id));
-  if (nhom.some((n) => n.cacDe.length)) {
-    if (conLai.length) nhom.push({ ten: "Đề khác", ma: null, cacDe: conLai });
-  } else {
-    const theoMon = {};
-    conLai.forEach((de) => { (theoMon[de.mon] = theoMon[de.mon] || []).push(de); });
-    Object.entries(theoMon).forEach(([mon, cacDe]) => nhom.push({ ten: mon, ma: null, cacDe }));
-  }
-  return nhom;
+  const cay = dung(layKhoDe());
+  return { cay, conLai: DANH_SACH_DE.filter((d) => !daXep.has(d.id)) };
 }
 
-// Vẽ các nhóm đề (mặc định: tất cả; mở bằng link thư mục thì chỉ một nhóm)
-function veDanhSachDe(nhom = nhomDe()) {
-  $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
-  $("danh-sach-mon").innerHTML = nhom.filter((n) => n.cacDe.length).map((n) => `
-    <div class="nhom-mon">
-      <h2>${anToan(n.ten)}</h2>
-      <div class="danh-sach-de">
-        ${n.cacDe.map((de) => `
-          <button type="button" class="the-de" data-ma-de="${anToan(de.id)}">
-            <h3>${de.ten}</h3>
-            <p>${de.moTa || ""}</p>
-            <div class="thong-so">
-              <span>${de.mon}</span>
-              <span>${de.thoiGian} phút</span>
-              <span>${de.phan1.length + de.phan2.length + de.phan3.length} câu</span>
-              <span>Thang ${vietSo(diemToiDa(de))} điểm</span>
-              ${de.pdf ? "<span>Có file PDF</span>" : ""}
-            </div>
-          </button>`).join("")}
+function timThuMuc(cay, ma) {
+  for (const t of cay) {
+    if (t.ma === ma) return t;
+    const trongCon = timThuMuc(t.con, ma);
+    if (trongCon) return trongCon;
+  }
+  return null;
+}
+
+const tatCaDeTrong = (t) => [...t.cacDe, ...t.con.flatMap(tatCaDeTrong)];
+
+function veTheDe(de) {
+  return `
+    <button type="button" class="the-de" data-ma-de="${anToan(de.id)}">
+      <h3>${de.ten}</h3>
+      <p>${de.moTa || ""}</p>
+      <div class="thong-so">
+        <span>${de.mon}</span>
+        <span>${de.thoiGian} phút</span>
+        <span>${de.phan1.length + de.phan2.length + de.phan3.length} câu</span>
+        <span>Thang ${vietSo(diemToiDa(de))} điểm</span>
+        ${de.pdf ? "<span>Có file PDF</span>" : ""}
       </div>
-    </div>`).join("") || `<p class="thong-bao-xem">Chưa có đề nào.</p>`;
+    </button>`;
+}
+
+const veLuoiDe = (cacDe) => (cacDe.length ? `<div class="danh-sach-de">${cacDe.map(veTheDe).join("")}</div>` : "");
+
+// Nội dung bên trong một thư mục: thư mục con (đóng sẵn, bấm để mở) rồi tới các đề
+function veRuotThuMuc(t) {
+  return t.con.filter((c) => c.tong).map((c) => `
+    <details class="thu-muc-hs">
+      <summary>${ICON_THU_MUC}<span class="ten-thu-muc">${anToan(c.ten)}</span><span class="dem-cau">${c.tong} đề</span></summary>
+      <div class="ruot-thu-muc-hs">${veRuotThuMuc(c)}</div>
+    </details>`).join("") + veLuoiDe(t.cacDe);
+}
+
+// goc: null = cả kho; một thư mục = mở bằng link thư mục (chỉ hiện cây con của thư mục đó)
+function veDanhSachDe(goc = null) {
+  $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
+  let html;
+  if (goc) {
+    html = `<h2 class="tieu-de-thu-muc">${ICON_THU_MUC}${anToan(goc.ten)}</h2>${veRuotThuMuc(goc)}`;
+  } else {
+    const { cay, conLai } = cayDe();
+    const coThuMuc = cay.some((t) => t.tong);
+    html = veRuotThuMuc({ con: cay, cacDe: [] }) +
+      (conLai.length ? `${coThuMuc ? `<h2 class="tieu-de-thu-muc">Đề khác</h2>` : ""}${veLuoiDe(conLai)}` : "");
+  }
+  $("danh-sach-mon").innerHTML = `<div class="cay-de">${html}</div>`;
 }
 
 $("danh-sach-mon").addEventListener("click", (e) => {
@@ -451,8 +470,8 @@ function khoiPhucBaiDangLam(chiCacDe) {
 
 // Link riêng của một đề (index.html?de=<id đề>, tạo bằng linkDe trong tai-de.js):
 // mở thẳng đề đó và ẩn nút "Chọn đề khác", để học sinh không làm nhầm đề.
-// Link thư mục (index.html?thu-muc=<mã thư mục>, tạo bằng linkThuMuc): chỉ hiện các đề trong thư mục đó,
-// học sinh làm xong đề này thì bấm "Chọn đề khác" để làm tiếp đề khác trong cùng thư mục.
+// Link thư mục (index.html?thu-muc=<mã thư mục>, tạo bằng linkThuMuc): chỉ hiện cây con của thư mục đó
+// (thư mục con + đề), học sinh làm xong đề này thì bấm "Chọn đề khác" để làm tiếp đề khác trong đó.
 const THAM_SO_LINK = new URLSearchParams(location.search);
 const MA_DE_TU_LINK = THAM_SO_LINK.get("de");
 const MA_THU_MUC_TU_LINK = THAM_SO_LINK.get("thu-muc");
@@ -472,19 +491,19 @@ function moDeTuLink() {
 }
 
 function moThuMucTuLink() {
-  const nhom = nhomDe().find((n) => n.ma === MA_THU_MUC_TU_LINK);
-  if (!nhom) {
+  const goc = timThuMuc(cayDe().cay, MA_THU_MUC_TU_LINK);
+  if (!goc) {
     $("ten-lop-hoc").textContent = CAU_HINH.TEN_LOP_HOC;
     $("danh-sach-mon").innerHTML = `<p class="thong-bao-xem">Link này không đúng hoặc thư mục đã bị xóa.
       Bạn hỏi lại thầy/cô link nhé.</p>`;
     return;
   }
-  veDanhSachDe([nhom]);
-  if (!nhom.cacDe.length) {
-    $("danh-sach-mon").innerHTML = `<h2>${anToan(nhom.ten)}</h2><p class="thong-bao-xem">Thư mục này chưa có đề nào.</p>`;
+  veDanhSachDe(goc);
+  if (!goc.tong) {
+    $("danh-sach-mon").insertAdjacentHTML("beforeend", `<p class="thong-bao-xem">Thư mục này chưa có đề nào.</p>`);
     return;
   }
-  khoiPhucBaiDangLam(nhom.cacDe.map((d) => d.id));
+  khoiPhucBaiDangLam(tatCaDeTrong(goc).map((d) => d.id));
 }
 
 // Chờ js/tai-de.js nạp xong các file đề rồi mới vẽ
