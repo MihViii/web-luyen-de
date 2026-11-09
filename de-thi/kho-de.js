@@ -17,7 +17,8 @@ const KHO_DE = [
     "ma": "chuong-1",
     "de": [
       "toan-chuong-i-de-1",
-      "toan-chuong-1-de-2"
+      "toan-chuong-1-de-2",
+      "toan-chuong-1-de-3"
     ],
     "con": []
   },

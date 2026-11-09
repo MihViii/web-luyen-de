@@ -1,17 +1,17 @@
-/* CHƯƠNG 1 - ĐỀ 3 · Toán
-   Tạo bằng trang "Tạo đề từ PDF" ngày 9/11/2026.
-   Mỗi câu là một ảnh cắt từ de.pdf. Muốn sửa đáp án thì đổi dapAn bên dưới. */
+/* [CHƯƠNG I - ĐỀ 3] · Toán
+   Sửa lần cuối bằng trang admin ngày 9/11/2026.
+   Muốn sửa tên, đáp án: trang admin -> Kho đề -> nút "Sửa" cạnh đề (hoặc sửa tay bên dưới).
+   ĐỪNG đổi "id" của đề đã có học sinh làm, vì link và bảng điểm nhận đề theo id. */
 
 themDe({
   id: "toan-chuong-1-de-3",
   mon: "Toán",
-  ten: "CHƯƠNG 1 - ĐỀ 3",
+  ten: "[CHƯƠNG I - ĐỀ 3]",
   moTa: "",
-  thoiGian: 90, // phút
+  thoiGian: 90,
   diemPhan1: 0.25,
   diemPhan3: 0.5,
-  pdf: "de.pdf", // file học sinh bấm "Tải đề" nhận được
-
+  pdf: "de.pdf",
   phan1: [
     { hinh: "p1-01.png", dapAn: "C" },
     { hinh: "p1-02.png", dapAn: "C" },
@@ -26,14 +26,12 @@ themDe({
     { hinh: "p1-11.png", dapAn: "D" },
     { hinh: "p1-12.png", dapAn: "D" }
   ],
-
   phan2: [
     { hinh: "p2-01.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: true }] },
     { hinh: "p2-02.png", y: [{ dapAn: true }, { dapAn: false }, { dapAn: true }, { dapAn: true }] },
     { hinh: "p2-03.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: true }, { dapAn: false }] },
     { hinh: "p2-04.png", y: [{ dapAn: true }, { dapAn: false }, { dapAn: true }, { dapAn: true }] }
   ],
-
   phan3: [
     { hinh: "p3-01.png", dapAn: 4 },
     { hinh: "p3-02.png", dapAn: 2 },
