@@ -53,4 +53,6 @@ const DANH_SACH_THU_MUC_DE = [
   "toan/de-19",
   "toan/de-20",
   "toan/chuong-1-de-3",
+  "toan/chuong-1-2-de-1",
+  "toan/chuong-1-2-de-2",
 ];
