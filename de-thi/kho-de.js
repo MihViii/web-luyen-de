@@ -13,7 +13,7 @@
 
 const KHO_DE = [
   {
-    "ten": "Chương 1",
+    "ten": "CHƯƠNG 1",
     "ma": "chuong-1",
     "de": [
       "toan-chuong-i-de-1",
@@ -23,7 +23,7 @@ const KHO_DE = [
     "con": []
   },
   {
-    "ten": "Đề khởi động",
+    "ten": "ĐỀ KHỞI ĐỘNG",
     "ma": "de-khoi-dong",
     "de": [
       "toan-de-khoi-dong-so-11",
@@ -33,6 +33,15 @@ const KHO_DE = [
       "toan-de-18",
       "toan-de-19",
       "toan-de-20"
+    ],
+    "con": []
+  },
+  {
+    "ten": "CHƯƠNG 1 + 2",
+    "ma": "chuong-1-2",
+    "de": [
+      "toan-chuong-1-2-de-1",
+      "toan-chuong-1-2-de-2"
     ],
     "con": []
   }
