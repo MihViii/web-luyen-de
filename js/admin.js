@@ -524,7 +524,8 @@ function dongSuaDe(k, i, soDe, de, cacThuMuc) {
   const nut = (lam, chu, nhan, tat) =>
     `<button type="button" class="nut nut-nho" data-lam="${lam}" data-k="${k}" data-i="${i}" aria-label="${nhan}" ${tat ? "disabled" : ""}>${chu}</button>`;
   return `
-    <div class="dong-sua">
+    <div class="dong-sua" draggable="true" data-keo="de" data-k="${k}" data-i="${i}" title="Kéo thả vào thư mục khác hoặc lên/xuống để đổi thứ tự">
+      <span class="tay-keo" aria-hidden="true">⠿</span>
       <span class="ten-de">${anToan(de.ten)}</span>
       ${nut("de-len", "↑", "Đưa đề lên", i === 0)}
       ${nut("de-xuong", "↓", "Đưa đề xuống", i === soDe - 1)}
@@ -541,8 +542,9 @@ function veNutSua(t, cacThuMuc, theoId, kCha, viTri, soAnhEm) {
   const nut = (lam, chu, nhan, tat = false) =>
     `<button type="button" class="nut nut-nho" data-lam="${lam}" data-k="${t.k}" aria-label="${nhan}" ${tat ? "disabled" : ""}>${chu}</button>`;
   return `
-    <div class="thu-muc dang-sua">
+    <div class="thu-muc dang-sua" data-tha-k="${t.k}">
       <div class="dau-thu-muc">
+        <span class="tay-keo" draggable="true" data-keo="tm" data-k="${t.k}" title="Kéo thả thư mục này vào thư mục khác">⠿</span>
         ${ICON_THU_MUC}
         <input class="o-ten-thu-muc" data-doi-ten="${t.k}" value="${anToan(t.ten)}" placeholder="Tên thư mục" aria-label="Tên thư mục">
         ${nut("tm-len", "↑", "Đưa thư mục lên", viTri === 0)}
@@ -570,14 +572,14 @@ function veKho() {
   let html;
   if (khoTam) {
     const cacThuMuc = cacThuMucKemDuongDan(khoTam.cay);
-    html = khoTam.cay.map((t, j) => veNutSua(t, cacThuMuc, theoId, 0, j, khoTam.cay.length)).join("") +
-      (khoTam.chuaXep.length ? `
-        <div class="thu-muc dang-sua">
-          <div class="dau-thu-muc"><span class="ten-thu-muc">Chưa xếp thư mục</span></div>
-          <div class="ruot-thu-muc">${khoTam.chuaXep.map((id, i) =>
-            dongSuaDe(0, i, khoTam.chuaXep.length, theoId.get(id), cacThuMuc)).join("")}</div>
-        </div>` : "");
-    if (!html) html = `<p class="dem-cau">Chưa có thư mục nào. Bấm “+ Thư mục mới” để tạo.</p>`;
+    html = khoTam.cay.map((t, j) => veNutSua(t, cacThuMuc, theoId, 0, j, khoTam.cay.length)).join("") + `
+      <div class="thu-muc dang-sua" data-tha-k="0">
+        <div class="dau-thu-muc"><span class="ten-thu-muc">Chưa xếp thư mục</span></div>
+        <div class="ruot-thu-muc">${khoTam.chuaXep.map((id, i) =>
+          dongSuaDe(0, i, khoTam.chuaXep.length, theoId.get(id), cacThuMuc)).join("") ||
+          `<p class="dem-cau">Thả đề vào đây để bỏ ra khỏi thư mục.</p>`}</div>
+      </div>
+      <div class="vung-ngoai-cung">Thả thư mục vào đây để đưa ra ngoài cùng</div>`;
   } else {
     const tim = boDau($("tim-de").value.trim());
     const chuaXep = khoXem.chuaXep.filter((id) =>
@@ -663,6 +665,82 @@ function suaKho(lam, k, i) {
   veKho();
 }
 
+/* Kéo thả trong chế độ sắp xếp (như Finder) */
+let dangKeo = null; // { loai: "de" | "tm", k, i }
+const dsDeCua = (k) => (k === 0 ? khoTam.chuaXep : timNut(khoTam.cay, k).nut.de);
+
+// Chỗ thả dưới con trỏ: trước một đề, vào một thư mục, hoặc ra ngoài cùng. null = không thả được
+function timChoTha(el) {
+  if (!dangKeo || !khoTam) return null;
+  const ngoai = el.closest(".vung-ngoai-cung");
+  if (ngoai) return { loai: "goc", el: ngoai };
+  const dong = el.closest(".dong-sua[data-keo]");
+  if (dong && dangKeo.loai === "de") return { loai: "truoc-de", k: +dong.dataset.k, i: +dong.dataset.i, el: dong };
+  const tm = el.closest("[data-tha-k]");
+  if (!tm) return null;
+  const k = +tm.dataset.thaK;
+  if (dangKeo.loai === "tm") {
+    if (k === 0) return null;
+    const trongNo = new Set(cacThuMucKemDuongDan([timNut(khoTam.cay, dangKeo.k).nut]).map((x) => x.k));
+    if (trongNo.has(k)) return null; // không thả thư mục vào chính nó hay con của nó
+  }
+  return { loai: "vao-tm", k, el: tm };
+}
+
+const boToSang = () => document.querySelectorAll("#ds-thu-muc .tha-vao").forEach((x) => x.classList.remove("tha-vao"));
+
+$("ds-thu-muc").addEventListener("dragstart", (e) => {
+  const nguon = e.target.closest && e.target.closest("[data-keo]");
+  if (!nguon || !khoTam) return;
+  dangKeo = { loai: nguon.dataset.keo, k: +nguon.dataset.k, i: +nguon.dataset.i };
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", "");
+  const hien = dangKeo.loai === "tm" ? nguon.closest(".dau-thu-muc") : nguon;
+  if (hien && e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(hien, 20, 20);
+  (dangKeo.loai === "tm" ? nguon.closest(".thu-muc") : nguon).classList.add("dang-keo");
+  $("ds-thu-muc").classList.add("dang-keo-" + dangKeo.loai);
+});
+
+$("ds-thu-muc").addEventListener("dragover", (e) => {
+  const cho = timChoTha(e.target);
+  boToSang();
+  if (!cho) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  cho.el.classList.add("tha-vao");
+});
+
+$("ds-thu-muc").addEventListener("drop", (e) => {
+  const cho = timChoTha(e.target);
+  if (!cho) return;
+  e.preventDefault();
+  if (dangKeo.loai === "de") {
+    const tu = dsDeCua(dangKeo.k);
+    const [id] = tu.splice(dangKeo.i, 1);
+    if (cho.loai === "truoc-de") {
+      const den = dsDeCua(cho.k);
+      den.splice(den === tu && dangKeo.i < cho.i ? cho.i - 1 : cho.i, 0, id);
+    } else if (cho.loai === "vao-tm") {
+      dsDeCua(cho.k).push(id);
+    } else {
+      khoTam.chuaXep.push(id);
+    }
+  } else {
+    const viTri = timNut(khoTam.cay, dangKeo.k);
+    const [nut] = viTri.ds.splice(viTri.i, 1);
+    (cho.loai === "goc" ? khoTam.cay : timNut(khoTam.cay, cho.k).nut.con).push(nut);
+  }
+  dangKeo = null;
+  veKho();
+});
+
+$("ds-thu-muc").addEventListener("dragend", () => {
+  dangKeo = null;
+  boToSang();
+  document.querySelectorAll("#ds-thu-muc .dang-keo").forEach((x) => x.classList.remove("dang-keo"));
+  $("ds-thu-muc").classList.remove("dang-keo-de", "dang-keo-tm");
+});
+
 $("ds-thu-muc").addEventListener("change", (e) => {
   const o = e.target;
   if (o.matches("select[data-chuyen-de]")) { // chuyển đề sang thư mục khác (vào cuối thư mục đó)
@@ -697,7 +775,7 @@ function batCheDoSua(bat) {
   $("nut-sap-xep").hidden = bat;
   $("thanh-luu-kho").hidden = !bat;
   $("goi-y-kho").innerHTML = bat
-    ? "Đổi tên, xóa, đưa thư mục lên xuống. Ô <b>Nằm trong</b> để đưa thư mục vào thư mục khác; ô bên phải mỗi đề để chuyển đề. Đổi tên thư mục thì link đã gửi vẫn dùng được. Xong bấm <b>Lưu vào thư mục project</b> rồi push lên GitHub; trang học sinh cũng xếp theo đúng cây này."
+    ? "<b>Kéo thả như Finder:</b> kéo đề (hoặc nút ⠿ của thư mục) thả vào thư mục khác; thả đề lên một đề khác để xếp ngay trước đề đó. Hoặc dùng ô <b>Nằm trong</b>, ô chọn bên phải mỗi đề, nút ↑ ↓. Đổi tên thư mục thì link đã gửi vẫn dùng được. Xong bấm <b>Lưu vào thư mục project</b> rồi push lên GitHub; trang học sinh cũng xếp theo đúng cây này."
     : "Bấm vào thư mục để mở. Dòng <b>Cả thư mục</b>: link cho học sinh làm mọi đề trong thư mục (kể cả thư mục con); các dòng dưới: link riêng từng đề.";
   veKho();
 }
@@ -705,6 +783,7 @@ function batCheDoSua(bat) {
 $("nut-sap-xep").addEventListener("click", () => { $("tt-luu-kho").textContent = ""; batCheDoSua(true); });
 $("nut-huy-sap-xep").addEventListener("click", () => batCheDoSua(false));
 $("nut-them-thu-muc").addEventListener("click", () => {
+  if (!khoTam) { $("tt-luu-kho").textContent = ""; batCheDoSua(true); }
   const moi = nutMoi();
   khoTam.cay.push(moi);
   veKho();

@@ -411,3 +411,20 @@ th:not([data-sap]) { cursor: default; }
 .thanh-luu-de .trang-thai-luu { flex-basis: 100%; margin: 0; font-size: 14px; }
 .thanh-luu-de .trang-thai-luu:empty { display: none; }
 #sd-noi-dung .luoi-thong-tin { margin-bottom: 4px; }
+
+/* Kéo thả trong chế độ sắp xếp thư mục */
+.tay-keo { cursor: grab; color: var(--muted); font-size: 16px; line-height: 1; padding: 4px 2px; user-select: none; }
+.dong-sua { grid-template-columns: auto minmax(0, 1fr) auto auto minmax(0, 200px); cursor: grab; }
+.dong-sua.dang-keo, .thu-muc.dang-keo { opacity: .45; }
+.dong-sua.tha-vao { box-shadow: inset 0 3px 0 var(--accent); }
+.thu-muc.dang-sua.tha-vao { outline: 2px dashed var(--accent); outline-offset: 2px; background: var(--accent-soft); }
+.vung-ngoai-cung {
+  display: none; padding: 14px; border: 2px dashed var(--line); border-radius: 8px;
+  text-align: center; font-size: 14px; color: var(--muted);
+}
+#ds-thu-muc.dang-keo-tm .vung-ngoai-cung { display: block; }
+.vung-ngoai-cung.tha-vao { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+@media (max-width: 600px) {
+  .dong-sua { grid-template-columns: auto auto minmax(0, 1fr); }
+  .dong-sua .tay-keo { display: none; }
+}
