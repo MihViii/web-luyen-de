@@ -381,7 +381,8 @@ function veKetQua() {
     <span>Thời gian làm: ${dinhDangThoiGian(kq.giayDaLam)}${kq.doHetGio ? " (hết giờ, tự nộp)" : ""}</span>
     <span class="trang-thai-luu" id="trang-thai-luu"></span>`);
 
-  $("xem-lai").innerHTML = veXemLai(de, trangThai.baiLam, kq.chiTiet);
+  // Mặc định không cho học sinh xem đáp án, chỉ biết câu nào sai (đổi trong js/config.js)
+  $("xem-lai").innerHTML = veXemLai(de, trangThai.baiLam, kq.chiTiet, "Bạn", CAU_HINH.HIEN_DAP_AN_CHO_HOC_SINH !== true);
   datBoLoc("tat-ca");
   hienMan("man-ket-qua");
   veCongThuc($("xem-lai"));

@@ -75,10 +75,13 @@ function veBangDiem(de, kq, thongTin) {
 /**
  * Vẽ từng câu: phương án đã chọn, đáp án, điểm, lời giải.
  * nguoiLam: chữ đứng trước câu trả lời ("Bạn" ở trang học sinh, "Học sinh" ở trang thống kê).
+ * anDapAn : true = không lộ đáp án (trang học sinh khi CAU_HINH.HIEN_DAP_AN_CHO_HOC_SINH là false):
+ *           chỉ báo câu đúng/sai và tô lựa chọn của học sinh, không hiện đáp án, lời giải;
+ *           Phần II chỉ báo số ý đúng, không chỉ ý nào sai (vì mỗi ý chỉ có Đ/S, chỉ ra là lộ đáp án).
  * Mỗi câu có id "xem-p<phần>-<số thứ tự>" và data-dung="true" nếu làm đúng hoàn toàn.
  */
-function veXemLai(de, bl, ct, nguoiLam = "Bạn") {
-  const loiGiai = (cau) => cau.loiGiai
+function veXemLai(de, bl, ct, nguoiLam = "Bạn", anDapAn = false) {
+  const loiGiai = (cau) => cau.loiGiai && !anDapAn
     ? `<div class="loi-giai"><span class="nhan">Lời giải</span>${cau.loiGiai}</div>` : "";
 
   const p1 = de.phan1.map((cau, i) => {
@@ -92,7 +95,9 @@ function veXemLai(de, bl, ct, nguoiLam = "Bạn") {
         <div class="lua-chon xem${cau.luaChon ? "" : " chi-chu"}">
           ${phuongAn(cau).map((lc, j) => {
             const chu = CHU_CAI[j];
-            const lop = chu === cau.dapAn ? "la-dap-an" : chu === chon ? "chon-sai" : "";
+            const lop = anDapAn
+              ? (chu === chon ? (dung ? "la-dap-an" : "chon-sai") : "")   // chỉ tô lựa chọn của học sinh
+              : (chu === cau.dapAn ? "la-dap-an" : chu === chon ? "chon-sai" : "");
             return `<label class="${lop}"><span class="bong">${chu}</span>${lc ? `<span>${lc}</span>` : ""}</label>`;
           }).join("")}
         </div>
@@ -107,7 +112,7 @@ function veXemLai(de, bl, ct, nguoiLam = "Bạn") {
     const lopCau = soDung === 4 ? "ket-qua-dung" : soDung === 0 ? "ket-qua-sai" : "ket-qua-mot-phan";
     return `
       <article class="cau ${lopCau}" id="xem-p2-${i}" data-dung="${soDung === 4}">
-        <div class="dau-cau"><b>Phần II · Câu ${i + 1}</b>${huyHieu(loai, `${soDung}/4 ý · +${vietSo(diem)}`)}</div>
+        <div class="dau-cau"><b>Phần II · Câu ${i + 1}</b>${huyHieu(loai, `${anDapAn ? "đúng " : ""}${soDung}/4 ý · +${vietSo(diem)}`)}</div>
         <div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>
         <div class="y-dung-sai">
           ${cau.y.map((y, j) => {
@@ -119,8 +124,8 @@ function veXemLai(de, bl, ct, nguoiLam = "Bạn") {
                 <span class="chu-y">${"abcd"[j]})</span>
                 <span class="noi-dung-y">${y.noiDung || ""}</span>
                 <span class="so-sanh">
-                  <span>${nguoiLam}: <b class="${ok ? "mau-dung" : "mau-sai"}">${chuTl}</b></span>
-                  <span>Đáp án: <b>${y.dapAn ? "Đ" : "S"}</b></span>
+                  <span>${nguoiLam}: <b class="${anDapAn ? "" : ok ? "mau-dung" : "mau-sai"}">${chuTl}</b></span>
+                  ${anDapAn ? "" : `<span>Đáp án: <b>${y.dapAn ? "Đ" : "S"}</b></span>`}
                 </span>
               </div>`;
           }).join("")}
@@ -139,13 +144,14 @@ function veXemLai(de, bl, ct, nguoiLam = "Bạn") {
         <div class="cau-hoi">${cau.noiDung || ""}${veHinh(de, cau)}</div>
         <div class="so-sanh">
           <span>${nguoiLam} trả lời: <b class="${dung ? "mau-dung" : "mau-sai"}">${tl ? anToan(tl) : "(bỏ trống)"}</b></span>
-          <span>Đáp án: <b>${vietSo(cau.dapAn)}</b></span>
+          ${anDapAn ? "" : `<span>Đáp án: <b>${vietSo(cau.dapAn)}</b></span>`}
         </div>
         ${loiGiai(cau)}
       </article>`;
   }).join("");
 
   return `
-    <div class="tieu-de-phan"><h2>Xem lại bài làm</h2><p>Viền xanh là đúng, đỏ là sai, vàng là đúng một phần.</p></div>
+    <div class="tieu-de-phan"><h2>Xem lại bài làm</h2><p>Viền xanh là đúng, đỏ là sai, vàng là đúng một phần.${anDapAn
+      ? " Phần II chỉ cho biết số ý đúng của mỗi câu." : ""}</p></div>
     ${p1}${p2}${p3}`;
 }
