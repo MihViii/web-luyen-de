@@ -13,33 +13,33 @@ themDe({
   pdf: "de.pdf", // file học sinh bấm "Tải đề" nhận được
 
   phan1: [
-    { hinh: "p1-01.png", dapAn: "B" },
+    { hinh: "p1-01.png", dapAn: "D" },
     { hinh: "p1-02.png", dapAn: "D" },
-    { hinh: "p1-03.png", dapAn: "A" },
-    { hinh: "p1-04.png", dapAn: "B" },
+    { hinh: "p1-03.png", dapAn: "C" },
+    { hinh: "p1-04.png", dapAn: "D" },
     { hinh: "p1-05.png", dapAn: "B" },
-    { hinh: "p1-06.png", dapAn: "C" },
-    { hinh: "p1-07.png", dapAn: "B" },
-    { hinh: "p1-08.png", dapAn: "D" },
-    { hinh: "p1-09.png", dapAn: "D" },
-    { hinh: "p1-10.png", dapAn: "D" },
-    { hinh: "p1-11.png", dapAn: "D" },
-    { hinh: "p1-12.png", dapAn: "A" }
+    { hinh: "p1-06.png", dapAn: "A" },
+    { hinh: "p1-07.png", dapAn: "C" },
+    { hinh: "p1-08.png", dapAn: "A" },
+    { hinh: "p1-09.png", dapAn: "B" },
+    { hinh: "p1-10.png", dapAn: "B" },
+    { hinh: "p1-11.png", dapAn: "B" },
+    { hinh: "p1-12.png", dapAn: "D" }
   ],
 
   phan2: [
-    { hinh: "p2-01.png", y: [{ dapAn: true }, { dapAn: false }, { dapAn: true }, { dapAn: true }] },
-    { hinh: "p2-02.png", y: [{ dapAn: false }, { dapAn: true }, { dapAn: true }, { dapAn: false }] },
-    { hinh: "p2-03.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: false }] },
-    { hinh: "p2-04.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: true }] }
+    { hinh: "p2-01.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: true }, { dapAn: false }] },
+    { hinh: "p2-02.png", y: [{ dapAn: false }, { dapAn: false }, { dapAn: true }, { dapAn: true }] },
+    { hinh: "p2-03.png", y: [{ dapAn: true }, { dapAn: true }, { dapAn: false }, { dapAn: true }] },
+    { hinh: "p2-04.png", y: [{ dapAn: true }, { dapAn: false }, { dapAn: false }, { dapAn: true }] }
   ],
 
   phan3: [
-    { hinh: "p3-01.png", dapAn: 1.5 },
-    { hinh: "p3-02.png", dapAn: 55.7 },
-    { hinh: "p3-03.png", dapAn: 9 },
-    { hinh: "p3-04.png", dapAn: 14 },
-    { hinh: "p3-05.png", dapAn: -2.1 },
-    { hinh: "p3-06.png", dapAn: 156 }
+    { hinh: "p3-01.png", dapAn: 1 },
+    { hinh: "p3-02.png", dapAn: 4 },
+    { hinh: "p3-03.png", dapAn: 7 },
+    { hinh: "p3-04.png", dapAn: 0.19 },
+    { hinh: "p3-05.png", dapAn: -6 },
+    { hinh: "p3-06.png", dapAn: 45 }
   ]
 });

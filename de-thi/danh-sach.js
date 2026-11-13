@@ -57,5 +57,5 @@ const DANH_SACH_THU_MUC_DE = [
   "toan/chuong-1-2-de-2",
   "toan/chuong-1-2-3-de-1",
   "toan/chuong-1-2-3-de-2",
-  // "toan/chuong-1-2-3-de-3", // TẠM ẨN: đáp án đang trùng đề 2, sửa xong thì bỏ // ở đầu dòng
+  "toan/chuong-1-2-3-de-3",
 ];
