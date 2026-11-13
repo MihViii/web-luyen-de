@@ -44,5 +44,11 @@ const KHO_DE = [
       "toan-chuong-1-2-de-2"
     ],
     "con": []
+  },
+  {
+    "ten": "CHƯƠNG 1 + 2 + 3",
+    "ma": "chuong-1-2-3",
+    "de": [],
+    "con": []
   }
 ];
